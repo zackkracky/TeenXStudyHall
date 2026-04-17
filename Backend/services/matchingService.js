@@ -3,8 +3,13 @@ const { calculateScore } = require("../utils/scoring");
 
 const findMatchingDonors = (bloodGroup) => {
 
-  // handle invalid input
-  if (!bloodGroup) {
+  console.log("\n🔍 Incoming request for:", bloodGroup);
+
+  // ✅ VALIDATION
+  const validBloodGroups = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+
+  if (!bloodGroup || !validBloodGroups.includes(bloodGroup)) {
+    console.log("❌ Invalid blood group");
     return {
       success: false,
       message: "Invalid blood group",
@@ -12,13 +17,16 @@ const findMatchingDonors = (bloodGroup) => {
     };
   }
 
-  // filter donors
+  // ✅ FILTER
   const filtered = donors.filter(
     (d) => d.blood_group === bloodGroup
   );
 
-  // no donors case
+  console.log("📊 Filtered donors:", filtered.length);
+
+  // ✅ NO DONORS
   if (filtered.length === 0) {
+    console.log("⚠️ No donors found");
     return {
       success: false,
       message: `No donors available for ${bloodGroup}`,
@@ -26,26 +34,30 @@ const findMatchingDonors = (bloodGroup) => {
     };
   }
 
-  // scoring
+  // ✅ SCORING
   const scored = filtered.map((donor) => ({
     ...donor,
     score: calculateScore(donor)
   }));
 
-  // sort
+  // ✅ SORT
   scored.sort((a, b) => a.score - b.score);
 
-  // ranking
+  // ✅ RANKING
   const ranked = scored.map((donor, index) => ({
     ...donor,
     rank: index + 1
   }));
 
-  // safe slice
+  const topDonors = ranked.slice(0, Math.min(5, ranked.length));
+
+  console.log("🏆 Top donors:", topDonors.map(d => d.name));
+
+  // ✅ FINAL OUTPUT
   return {
     success: true,
-    donors: ranked.slice(0, Math.min(5, ranked.length))
+    donors: topDonors
   };
 };
 
-module.exports = { findMatchingDonors }; // ✅ VERY IMPORTANT
+module.exports = { findMatchingDonors };
