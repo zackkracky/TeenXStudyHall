@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-const { getDonors, notifyDonors } = require("../controllers/donorController");
+const { getAllDonors, getDonors, notifyDonors } = require("../controllers/donorController");
 
+router.get("/donors", getAllDonors);
 router.post("/match-donors", getDonors);
 router.post("/notify", notifyDonors);
 

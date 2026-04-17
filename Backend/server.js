@@ -20,6 +20,7 @@ app.get("/api", (req, res) => {
     version: "1.0",
     status: "Active",
     endpoints: {
+      "GET /api/donors": "Return the full donor list from donors.json",
       "POST /api/match-donors": "Find matching donors by blood group",
       "POST /api/notify": "Notify selected donors"
     }
