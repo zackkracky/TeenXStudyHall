@@ -5,7 +5,7 @@
 'use strict';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'http://localhost:5001/api';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const BLOOD_BANKS = [
@@ -710,7 +710,7 @@ function getReply(msg) {
   if (t.includes('register') || t.includes('add donor'))
     return "📋 Register donors on the <b>Register Donor</b> page. They'll appear in All Donors → Community tab and in search results. Eligibility: age 18–65, weight ≥50 kg, last donation ≥3 months ago.";
   if (t.includes('api') || t.includes('backend') || t.includes('endpoint'))
-    return "🔌 Backend runs on <code>http://localhost:5000/api</code>. Endpoints: <code>POST /match-donors</code> (send blood_group) and <code>POST /notify</code> (send donors array). The API status indicator in the sidebar header shows current connection state.";
+    return "🔌 Backend runs on <code>http://localhost:5001/api</code>. Endpoints: <code>POST /match-donors</code> (send blood_group) and <code>POST /notify</code> (send donors array). The API status indicator in the sidebar header shows current connection state.";
   if (t.includes('eta') || t.includes('time') || t.includes('fast') || t.includes('arrive'))
     return "⏱ ETA = <b>(distance ÷ 30 km/h) × 60 minutes</b>. The network average is ~9 minutes. Rank #1 donors have highest response rates and shortest estimated arrival times.";
   if (t.includes('o-') || t.includes('universal donor'))
