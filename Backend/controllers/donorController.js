@@ -3,9 +3,7 @@ const { findMatchingDonors } = require("../services/matchingService");
 // MATCH DONORS
 const getDonors = (req, res) => {
   try {
-    // supports both POST (req.body) and fallback GET testing
-    const blood_group =
-      req.body?.blood_group || req.query?.blood_group;
+    const blood_group = req.body?.blood_group;
 
     if (!blood_group) {
       return res.json({
@@ -26,7 +24,7 @@ const getDonors = (req, res) => {
     });
 
   } catch (error) {
-    console.log("ERROR:", error);
+    console.log(error);
     res.json({
       success: false,
       message: "Server error"
@@ -35,7 +33,7 @@ const getDonors = (req, res) => {
 };
 
 
-// NOTIFY DONORS (Person A requirement: always pick top donor)
+// NOTIFY DONORS
 const notifyDonors = (req, res) => {
   try {
     const { donors } = req.body;
@@ -47,7 +45,6 @@ const notifyDonors = (req, res) => {
       });
     }
 
-    // ✅ REQUIRED: pick top-ranked donor (index 0)
     const accepted = donors[0];
 
     res.json({
@@ -58,13 +55,12 @@ const notifyDonors = (req, res) => {
     });
 
   } catch (error) {
-    console.log("ERROR:", error);
+    console.log(error);
     res.json({
       success: false,
       message: "Server error"
     });
   }
 };
-
 
 module.exports = { getDonors, notifyDonors };

@@ -5,14 +5,11 @@ const donorRoutes = require("./routes/donorRoutes");
 
 const app = express();
 
-// middleware
 app.use(cors());
 app.use(express.json());
 
-// routes
 app.use("/api", donorRoutes);
 
-// test route
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
