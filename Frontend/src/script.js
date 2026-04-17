@@ -183,8 +183,14 @@ function toggleSidebar() {
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────────────────
 function switchTab(pageKey, tabKey, btn) {
-  // find pane id pattern: [pageKey]tab-[tabKey]
-  const prefix = pageKey + 'tab-';
+  const prefixMap = {
+    home: 'htab-',
+    search: 'stab-',
+    donors: 'dtab-',
+    banks: 'btab-',
+    hosps: 'hstab-'
+  };
+  const prefix = prefixMap[pageKey] || pageKey + 'tab-';
   document.querySelectorAll(`[id^="${prefix}"]`).forEach(p => p.classList.remove('active'));
   const pane = document.getElementById(prefix + tabKey);
   if (pane) pane.classList.add('active');
@@ -439,7 +445,7 @@ function renderAllDonors() {
     available:d.available, response_rate:d.rate||0.82, score:-9, rank:1
   }))];
   renderDonorGrid('allDonorGrid', all);
-  renderDonorGrid('availGrid', all.filter(d => d.available));
+  renderDonorGrid('availGrid', all.filter(d => d.available === true || d.available === 'true'));
   document.getElementById('donorCnt').textContent = `${all.length} donors`;
 }
 
@@ -456,6 +462,7 @@ function filterDonors() {
     (!bgf || d.blood_group === bgf)
   );
   renderDonorGrid('allDonorGrid', filt);
+  renderDonorGrid('availGrid', filt.filter(d => d.available === true || d.available === 'true'));
   document.getElementById('donorCnt').textContent = `${filt.length} donors`;
 }
 
