@@ -53,6 +53,7 @@ const BASE_DONORS = [
 
 const LOCAL_KEY = 'wlr_donors_v2';
 let communityDonors = [];
+let allDonors = [];
 let lastSearchDonors = [];
 let sosActive = false;
 let currentUrgency = 'critical';
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHospitals();
   renderMapHospList();
   renderCompatTable();
-  renderAllDonors();
+  loadAllDonors();
   renderCommunityDonors();
   renderInvChart();
   updateStats();
@@ -105,6 +106,20 @@ async function apiMatchDonors(bg) {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({blood_group:bg})
+  });
+  return res.json();
+}
+
+async function apiGetAllDonors() {
+  const res = await fetch(`${BASE_URL}/donors`);
+  return res.json();
+}
+
+async function apiAddDonor(donor) {
+  const res = await fetch(`${BASE_URL}/donors`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(donor)
   });
   return res.json();
 }
@@ -403,8 +418,23 @@ async function triggerSOS() {
 }
 
 // ── DONORS PAGE ───────────────────────────────────────────────────────────────
+async function loadAllDonors() {
+  try {
+    const data = await apiGetAllDonors();
+    if (data.success && Array.isArray(data.donors) && data.donors.length) {
+      allDonors = data.donors;
+    } else {
+      allDonors = BASE_DONORS;
+    }
+  } catch {
+    allDonors = BASE_DONORS;
+  }
+  renderAllDonors();
+}
+
 function renderAllDonors() {
-  const all  = [...BASE_DONORS, ...communityDonors.map((d,i) => ({
+  const source = allDonors.length ? allDonors : BASE_DONORS;
+  const all  = [...source, ...communityDonors.map((d,i) => ({
     id: 100+i, name:d.name, blood_group:d.bloodGroup, distance:d.distance||Math.round(Math.random()*5+1),
     available:d.available, response_rate:d.rate||0.82, score:-9, rank:1
   }))];
@@ -416,7 +446,8 @@ function renderAllDonors() {
 function filterDonors() {
   const q    = document.getElementById('donorFilter').value.toLowerCase();
   const bgf  = document.getElementById('donorBGF').value;
-  const all  = [...BASE_DONORS, ...communityDonors.map((d,i) => ({
+  const source = allDonors.length ? allDonors : BASE_DONORS;
+  const all  = [...source, ...communityDonors.map((d,i) => ({
     id:100+i, name:d.name, blood_group:d.bloodGroup, distance:d.distance||3,
     available:d.available, response_rate:0.82, score:-9, rank:1
   }))];
@@ -429,7 +460,7 @@ function filterDonors() {
 }
 
 // ── REGISTER ──────────────────────────────────────────────────────────────────
-function registerDonor() {
+async function registerDonor() {
   const name  = document.getElementById('rName').value.trim();
   const bg    = document.getElementById('rBG').value;
   const loc   = document.getElementById('rLoc').value.trim();
@@ -437,20 +468,51 @@ function registerDonor() {
   if (!name || !bg || !loc || !phone) { toast('Fill all required fields (*)', 'w'); return; }
 
   const donor = {
-    name, bloodGroup:bg, location:loc, phone,
+    name,
+    blood_group: bg,
+    location: loc,
+    phone,
     lastDonation: document.getElementById('rLast').value || 'First time',
-    available:    document.getElementById('rAvail').value === 'true',
-    distance:     +(Math.random()*5+1).toFixed(1),
-    rate:         +(Math.random()*0.2+0.75).toFixed(2)
+    available: document.getElementById('rAvail').value === 'true',
+    distance: +(Math.random() * 5 + 1).toFixed(1),
+    response_rate: +(Math.random() * 0.2 + 0.75).toFixed(2)
   };
-  communityDonors.push(donor);
+
+  let savedToBackend = false;
+  try {
+    const result = await apiAddDonor(donor);
+    if (result.success && result.donor) {
+      savedToBackend = true;
+      donor.id = result.donor.id;
+    }
+  } catch (error) {
+    console.warn('Backend add donor failed', error);
+  }
+
+  // keep community donors locally for UI and filtering
+  communityDonors.push({
+    name,
+    bloodGroup: bg,
+    location: loc,
+    phone,
+    lastDonation: donor.lastDonation,
+    available: donor.available,
+    distance: donor.distance,
+    rate: donor.response_rate
+  });
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(communityDonors)); } catch {}
 
+  if (savedToBackend) {
+    await loadAllDonors();
+    toast(`✅ ${name} registered and saved to donors.json`, 's');
+  } else {
+    renderAllDonors();
+    toast(`✅ ${name} registered locally (backend unavailable)`, 'i');
+  }
+
   renderCommunityDonors();
-  renderAllDonors();
   updateStats();
   ['rName','rBG','rLoc','rPhone','rLast'].forEach(id => document.getElementById(id).value = '');
-  toast(`✅ ${name} registered as ${bg} donor!`, 's');
 }
 
 function renderCommunityDonors() {
