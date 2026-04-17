@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WLR Blood Network — Emergency Blood Logistics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<!-- LIVE TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-inner">
+    <span>🔴 O+ URGENT — Central Hyderabad &nbsp;|&nbsp; ✅ Donor confirmed — ETA 8 min &nbsp;|&nbsp; 🏥 Apollo Jubilee Hills: STOCKED &nbsp;|&nbsp; 🔴 B- LOW SUPPLY — Metro South &nbsp;|&nbsp; 📍 3 donors registered this hour &nbsp;|&nbsp; ✅ SOS resolved — Gachibowli Zone &nbsp;|&nbsp; 🩸 AB- critical request — Secunderabad &nbsp;|&nbsp;</span>
+    <span>🔴 O+ URGENT — Central Hyderabad &nbsp;|&nbsp; ✅ Donor confirmed — ETA 8 min &nbsp;|&nbsp; 🏥 Apollo Jubilee Hills: STOCKED &nbsp;|&nbsp; 🔴 B- LOW SUPPLY — Metro South &nbsp;|&nbsp; 📍 3 donors registered this hour &nbsp;|&nbsp; ✅ SOS resolved — Gachibowli Zone &nbsp;|&nbsp; 🩸 AB- critical request — Secunderabad &nbsp;|&nbsp;</span>
+  </div>
+</div>
+ 
+<div class="shell">
+ 
+  <!-- ════ SIDEBAR ════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">+</div>
+      <div class="brand-text">
+        <h1>WLR</h1>
+        <p>Blood Network</p>
+      </div>
+    </div>
+ 
+    <!-- HOME BUTTON (prominent) -->
+    <button class="home-btn" onclick="showPage('home')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Back to Home
+    </button>
+ 
+    <div class="nav-sep">Emergency</div>
+    <button class="nb active" id="nb-home"     onclick="showPage('home')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+      Overview
+    </button>
+    <button class="nb" id="nb-search"   onclick="showPage('search')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      Match Donors
+      <span class="npill">API</span>
+    </button>
+    <button class="nb" id="nb-sos"      onclick="showPage('sos')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      SOS Alert
+    </button>
+ 
+    <div class="nav-sep">Donors</div>
+    <button class="nb" id="nb-donors"   onclick="showPage('donors')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      All Donors
+    </button>
+    <button class="nb" id="nb-register" onclick="showPage('register')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+      Register Donor
+    </button>
+ 
+    <div class="nav-sep">Resources</div>
+    <button class="nb" id="nb-banks"     onclick="showPage('banks')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      Blood Banks
+    </button>
+    <button class="nb" id="nb-hospitals" onclick="showPage('hospitals')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Hospitals
+    </button>
+    <button class="nb" id="nb-map"       onclick="showPage('map')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      Hospital Map
+      <span class="npill new">NEW</span>
+    </button>
+ 
+    <div class="nav-sep">Tools</div>
+    <button class="nb" id="nb-compat"    onclick="showPage('compat')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      Compatibility
+    </button>
+    <button class="nb" id="nb-ai"        onclick="showPage('ai')">
+      <svg class="ni" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+      AI Assistant
+    </button>
+ 
+    <div class="sb-footer">
+      <div class="api-pill" id="apiPill">
+        <span class="api-dot" id="apiDot"></span>
+        <span id="apiText">Checking API…</span>
+      </div>
+    </div>
+  </aside>
+ 
+  <!-- ════ MAIN ════ -->
+  <div class="main">
+ 
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-info">
+        <div class="topbar-title" id="topTitle">Dashboard Overview</div>
+        <div class="topbar-sub" id="topSub">Real-time blood logistics monitoring</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-home-top" onclick="showPage('home')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Home
+        </button>
+        <button class="btn-sos-top" onclick="showPage('sos')">⚡ SOS</button>
+      </div>
+    </header>
+ 
+    <!-- ══════════════ PAGE: HOME ══════════════ -->
+    <section class="page active" id="page-home">
+      <div class="hero-block">
+        <div class="hero-copy">
+          <div class="eyebrow">WLR Blood Network · Hyderabad</div>
+          <h2 class="hero-h">Intelligent Emergency<br><em>Blood Logistics</em></h2>
+          <p class="hero-p">Real-time donor matching, SOS coordination, and hospital-bank routing — powered by AI and live backend data.</p>
+          <div class="hero-btns">
+            <button class="btn btn-white" onclick="showPage('search')">🔍 Find Donors</button>
+            <button class="btn btn-ghost" onclick="showPage('register')">+ Register Donor</button>
+            <button class="btn btn-ghost" onclick="showPage('map')">🗺 Hospital Map</button>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="hs-card red">🩸<br><strong id="hStatDonors">—</strong><br><small>Donors</small></div>
+          <div class="hs-card amber">⏱<br><strong>9 min</strong><br><small>Avg ETA</small></div>
+          <div class="hs-card teal">🏥<br><strong>7</strong><br><small>Hospitals</small></div>
+          <div class="hs-card blue">🏦<br><strong>4</strong><br><small>Blood Banks</small></div>
+        </div>
+      </div>
+ 
+      <!-- Home sub-tabs -->
+      <div class="tab-strip" data-group="home">
+        <button class="tab-btn active" onclick="switchTab('home','overview',this)">Overview</button>
+        <button class="tab-btn" onclick="switchTab('home','quicksearch',this)">Quick Search</button>
+        <button class="tab-btn" onclick="switchTab('home','activity',this)">Activity Feed</button>
+      </div>
+ 
+      <div class="tab-pane active" id="htab-overview">
+        <div class="stats-row">
+          <div class="sc c-red"><div class="sc-ico">🩸</div><div class="sc-v" id="scDonors">—</div><div class="sc-l">Total Donors</div><div class="sc-d">↑ Active today</div></div>
+          <div class="sc c-amber"><div class="sc-ico">⏱</div><div class="sc-v">9 min</div><div class="sc-l">Avg Response</div><div class="sc-d">↓ 2 min faster</div></div>
+          <div class="sc c-teal"><div class="sc-ico">🏥</div><div class="sc-v">7</div><div class="sc-l">Hospitals Ready</div><div class="sc-d">24/7 coverage</div></div>
+          <div class="sc c-blue"><div class="sc-ico">🏦</div><div class="sc-v">4</div><div class="sc-l">Blood Banks</div><div class="sc-d">All operational</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="ch"><span class="ct">📊 Blood Type Distribution</span></div>
+            <div class="cb" id="distChart"></div>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">⚡ Quick Actions</span></div>
+            <div class="cb">
+              <div class="qa-grid">
+                <button class="qa" onclick="showPage('search')">🔍<span>Find Donors</span></button>
+                <button class="qa" onclick="showPage('sos')">🚨<span>Trigger SOS</span></button>
+                <button class="qa" onclick="showPage('map')">🗺<span>Hospital Map</span></button>
+                <button class="qa" onclick="showPage('register')">➕<span>Add Donor</span></button>
+                <button class="qa" onclick="showPage('banks')">🏦<span>Blood Banks</span></button>
+                <button class="qa" onclick="showPage('compat')">🧬<span>Compatibility</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="tab-pane" id="htab-quicksearch">
+        <div class="card">
+          <div class="ch"><span class="ct">🩸 Quick Match — Select a Blood Group</span></div>
+          <div class="cb">
+            <div class="bg-grid" id="bgGrid"></div>
+            <div id="quickResults" style="margin-top:20px"></div>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="tab-pane" id="htab-activity">
+        <div class="card">
+          <div class="ch"><span class="ct">📋 Recent Activity</span></div>
+          <div class="cb" id="activityFeed"></div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: MATCH DONORS ══════════════ -->
+    <section class="page" id="page-search">
+      <div class="tab-strip" data-group="search">
+        <button class="tab-btn active" onclick="switchTab('search','form',this)">Search Form</button>
+        <button class="tab-btn" onclick="switchTab('search','results',this)">Results</button>
+        <button class="tab-btn" onclick="switchTab('search','banks',this)">Nearby Banks</button>
+      </div>
+ 
+      <div class="tab-pane active" id="stab-form">
+        <div class="search-layout">
+          <div>
+            <div class="card">
+              <div class="ch"><span class="ct">🔍 Search Criteria</span></div>
+              <div class="cb">
+                <div class="fg"><label class="fl">Blood Group Required</label>
+                  <div class="sw"><select class="fi" id="searchBG">
+                    <option value="">Choose blood group</option>
+                    <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                    <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                  </select></div>
+                </div>
+                <div class="fg"><label class="fl">Emergency Level</label>
+                  <div class="chip-row">
+                    <span class="chip active" onclick="pickChip(this,'critical')">🔴 Critical</span>
+                    <span class="chip" onclick="pickChip(this,'priority')">🟠 Priority</span>
+                    <span class="chip" onclick="pickChip(this,'standard')">🟡 Standard</span>
+                  </div>
+                </div>
+                <div class="fg"><label class="fl">Location (optional)</label>
+                  <input class="fi" id="searchLoc" placeholder="e.g. Gachibowli, Kondapur…">
+                </div>
+                <div class="fg"><label class="fl">Units Required</label>
+                  <input class="fi" id="searchUnits" type="number" min="1" max="10" value="1">
+                </div>
+                <button class="btn btn-red wf" onclick="runSearch()">Find Matching Donors via API</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="eta-card hidden" id="etaCard">
+              <div class="eta-lbl">✅ Donor Confirmed</div>
+              <div class="eta-name" id="etaName">—</div>
+              <div class="eta-time">Arriving in <strong id="etaVal">—</strong></div>
+            </div>
+            <div class="card" style="margin-top:14px">
+              <div class="ch"><span class="ct">🤖 AI Routing Insight</span></div>
+              <div class="cb text-muted" id="aiInsight">Run a search to generate routing advice and response predictions.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="tab-pane" id="stab-results">
+        <div class="row-sb" style="margin-bottom:14px">
+          <h3 class="sect">Matched Donors</h3>
+          <span class="badge r" id="matchBadge">0 results</span>
+        </div>
+        <div class="donor-grid" id="donorGrid">
+          <div class="empty"><div class="ei">🩸</div><p>Run a search to see donor matches</p></div>
+        </div>
+      </div>
+ 
+      <div class="tab-pane" id="stab-banks">
+        <h3 class="sect" style="margin-bottom:14px">Nearby Blood Banks</h3>
+        <div class="bank-list" id="searchBankList"></div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: SOS ══════════════ -->
+    <section class="page" id="page-sos">
+      <div class="sos-hero">
+        <div class="eyebrow" style="color:rgba(255,255,255,.4)">Emergency Broadcast System</div>
+        <h2 class="sos-h">🚨 SOS Alert Mode</h2>
+        <p class="sos-p">Activate a high-priority emergency broadcast to all matching donors, hospitals, and blood banks in Hyderabad.</p>
+        <button class="sos-btn" id="sosBtn" onclick="triggerSOS()">ACTIVATE SOS</button>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="ch"><span class="ct">⚙️ Emergency Config</span></div>
+          <div class="cb">
+            <div class="fg"><label class="fl">Blood Group</label>
+              <div class="sw"><select class="fi" id="sosBG">
+                <option value="">Select blood group</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select></div>
+            </div>
+            <div class="fg"><label class="fl">Hospital / Zone</label>
+              <input class="fi" id="sosLoc" placeholder="e.g. Apollo Jubilee Hills">
+            </div>
+            <div class="fg"><label class="fl">Patient Condition</label>
+              <div class="chip-row">
+                <span class="chip active" onclick="pickChip(this,'critical')">💀 Critical</span>
+                <span class="chip" onclick="pickChip(this,'surgery')">🏥 Surgery</span>
+                <span class="chip" onclick="pickChip(this,'trauma')">⚡ Trauma</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">📡 SOS Status</span></div>
+          <div class="cb">
+            <div class="info-row"><span>🔴</span><div><b>Status</b><br><small class="text-muted" id="sosStat">No active broadcast</small></div></div>
+            <div class="info-row"><span>🧑‍⚕️</span><div><b>Top Donor Route</b><br><small class="text-muted" id="sosTopD">Awaiting search</small></div></div>
+            <div class="info-row"><span>🏥</span><div><b>Hospital Fallback</b><br><small class="text-muted">Apollo Hospitals, Jubilee Hills</small></div></div>
+            <div class="info-row"><span>🏦</span><div><b>Bank Fallback</b><br><small class="text-muted">RedCross Metro Bank — HIGH stock</small></div></div>
+          </div>
+        </div>
+      </div>
+      <h3 class="sect" style="margin:20px 0 12px">SOS Broadcast Log</h3>
+      <div class="card"><div class="cb text-muted" id="sosLog">SOS log will appear here when activated.</div></div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: ALL DONORS ══════════════ -->
+    <section class="page" id="page-donors">
+      <div class="tab-strip" data-group="donors">
+        <button class="tab-btn active" onclick="switchTab('donors','all',this)">All Donors</button>
+        <button class="tab-btn" onclick="switchTab('donors','available',this)">Available Now</button>
+        <button class="tab-btn" onclick="switchTab('donors','community',this)">Community</button>
+      </div>
+ 
+      <div class="tab-pane active" id="dtab-all">
+        <div class="row-sb filter-row">
+          <input class="fi" id="donorFilter" style="flex:1;min-width:160px" placeholder="Filter by name, blood group, location…" oninput="filterDonors()" type="text">
+          <div class="sw" style="width:130px"><select class="fi" id="donorBGF" onchange="filterDonors()">
+            <option value="">All groups</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select></div>
+          <span class="badge r" id="donorCnt">—</span>
+        </div>
+        <div class="donor-grid" id="allDonorGrid"></div>
+      </div>
+ 
+      <div class="tab-pane" id="dtab-available">
+        <h3 class="sect" style="margin-bottom:14px">Available Donors Right Now</h3>
+        <div class="donor-grid" id="availGrid"></div>
+      </div>
+ 
+      <div class="tab-pane" id="dtab-community">
+        <div class="row-sb" style="margin-bottom:14px">
+          <h3 class="sect">Community Registered Donors</h3>
+          <button class="btn btn-red" onclick="showPage('register')">+ Register New</button>
+        </div>
+        <div class="donor-grid" id="commGrid">
+          <div class="empty"><div class="ei">👥</div><p>No community donors yet. <a href="#" onclick="showPage('register');return false">Register one →</a></p></div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: REGISTER ══════════════ -->
+    <section class="page" id="page-register">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="ch"><span class="ct">📋 Donor Registration Form</span></div>
+          <div class="cb">
+            <div class="reg-grid">
+              <div class="fg"><label class="fl">Full Name *</label><input class="fi" id="rName" placeholder="Enter full name"></div>
+              <div class="fg"><label class="fl">Blood Group *</label><div class="sw"><select class="fi" id="rBG"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div></div>
+              <div class="fg"><label class="fl">Location / Area *</label><input class="fi" id="rLoc" placeholder="e.g. Gachibowli"></div>
+              <div class="fg"><label class="fl">Phone Number *</label><input class="fi" id="rPhone" placeholder="10-digit number" type="tel"></div>
+              <div class="fg"><label class="fl">Last Donation</label><input class="fi" id="rLast" placeholder="e.g. 3 months ago"></div>
+              <div class="fg"><label class="fl">Availability</label><div class="sw"><select class="fi" id="rAvail"><option value="true">Available Now</option><option value="false">Unavailable</option></select></div></div>
+              <div class="fg"><label class="fl">Age</label><input class="fi" id="rAge" placeholder="e.g. 28" type="number" min="18" max="65"></div>
+              <div class="fg"><label class="fl">Weight (kg)</label><input class="fi" id="rWeight" placeholder="Min 50 kg" type="number" min="50"></div>
+            </div>
+            <button class="btn btn-red wf" style="margin-top:10px" onclick="registerDonor()">Register into Network</button>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="ch"><span class="ct">✅ Eligibility Criteria</span></div>
+            <div class="cb">
+              <div class="info-row">✅ <span>Age 18–65 years</span></div>
+              <div class="info-row">✅ <span>Weight ≥ 50 kg</span></div>
+              <div class="info-row">✅ <span>Last donation ≥ 3 months ago</span></div>
+              <div class="info-row">✅ <span>Hemoglobin ≥ 12.5 g/dL (female) / 13.5 (male)</span></div>
+              <div class="info-row">⚠️ <span>No recent illness, surgery or travel to endemic zones</span></div>
+              <div class="info-row">⚠️ <span>No tattoos/piercings in last 6 months</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">👥 Recently Registered</span></div>
+            <div class="cb" id="recentReg"><p class="text-muted">No community donors yet.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: BLOOD BANKS ══════════════ -->
+    <section class="page" id="page-banks">
+      <div class="tab-strip" data-group="banks">
+        <button class="tab-btn active" onclick="switchTab('banks','list',this)">Bank Listings</button>
+        <button class="tab-btn" onclick="switchTab('banks','inv',this)">Inventory</button>
+        <button class="tab-btn" onclick="switchTab('banks','ai',this)">AI Balancing</button>
+      </div>
+      <div class="tab-pane active" id="btab-list">
+        <h3 class="sect" style="margin-bottom:14px">Hyderabad Blood Banks</h3>
+        <div class="bank-list" id="bankPageList"></div>
+      </div>
+      <div class="tab-pane" id="btab-inv">
+        <div class="card"><div class="ch"><span class="ct">📦 Inventory Status</span></div><div class="cb" id="invChart"></div></div>
+      </div>
+      <div class="tab-pane" id="btab-ai">
+        <div class="card">
+          <div class="ch"><span class="ct">🔄 AI Stock Balancing Recommendations</span></div>
+          <div class="cb">
+            <p class="text-muted" style="margin-bottom:14px;font-size:.85rem">AI-generated recommendations to prevent local shortages and inventory overcrowding.</p>
+            <div class="info-row">📤 <span><b>Transfer</b> 2 O- units: Metro South → North Avenue (stock mismatch)</span></div>
+            <div class="info-row">📥 <span><b>Request restock</b> AB+ at Hope Blood Center — currently LOW</span></div>
+            <div class="info-row">✅ <span><b>No action</b> needed: RedCross Metro Bank is HIGH across all types</span></div>
+            <div class="info-row">⚠️ <span><b>Monitor</b> City Hospital West End — B- approaching critical low</span></div>
+            <div class="info-row">📡 <span><b>Alert O-</b> eligible donors in North Ave zone to donate this week</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: HOSPITALS ══════════════ -->
+    <section class="page" id="page-hospitals">
+      <div class="tab-strip" data-group="hosps">
+        <button class="tab-btn active" onclick="switchTab('hosps','list',this)">Hospital List</button>
+        <button class="tab-btn" onclick="switchTab('hosps','maplink',this)">Map View</button>
+      </div>
+      <div class="tab-pane active" id="hstab-list">
+        <h3 class="sect" style="margin-bottom:14px">Emergency Hospitals — Hyderabad</h3>
+        <div class="hospital-grid" id="hospitalGrid"></div>
+      </div>
+      <div class="tab-pane" id="hstab-maplink">
+        <div class="card"><div class="cb" style="text-align:center;padding:48px">
+          <div style="font-size:3rem;margin-bottom:12px">🗺</div>
+          <h3 style="margin-bottom:10px;font-family:'DM Serif Display',serif">Open Interactive Hospital Map</h3>
+          <p class="text-muted" style="margin-bottom:20px">See all Hyderabad hospitals with blood availability pinned on a live Google Map.</p>
+          <button class="btn btn-red" onclick="showPage('map')">Open Hospital Map →</button>
+        </div></div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: HOSPITAL MAP ══════════════ -->
+    <section class="page" id="page-map">
+      <div class="map-layout">
+ 
+        <!-- Map sidebar -->
+        <div class="map-sidebar">
+          <div class="card" style="margin-bottom:14px">
+            <div class="ch"><span class="ct">🏥 Hospitals on Map</span></div>
+            <div class="cb" id="mapHospList"></div>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">🔍 Filter</span></div>
+            <div class="cb">
+              <div class="fg">
+                <input class="fi" id="mapFilter" placeholder="Search hospital or area…" oninput="filterMapList()" type="text">
+              </div>
+              <div class="chip-row" style="flex-wrap:wrap;gap:6px">
+                <span class="chip active" onclick="filterMapStock(this,'all')">All</span>
+                <span class="chip" onclick="filterMapStock(this,'high')">🟢 High</span>
+                <span class="chip" onclick="filterMapStock(this,'medium')">🟡 Medium</span>
+                <span class="chip" onclick="filterMapStock(this,'low')">🔴 Low</span>
+              </div>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Map main -->
+        <div class="map-main">
+          <div class="map-frame-wrap">
+            <iframe
+              id="mapFrame"
+              title="Hyderabad Blood Bank & Hospital Map"
+              src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d121968.05895834254!2d78.3564993!3d17.3987946!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sblood+bank+hospital+hyderabad!5e0!3m2!1sen!2sin!4v1706000000000!5m2!1sen!2sin"
+              loading="lazy"
+              allowfullscreen
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+            <!-- Quick-focus hospital buttons -->
+            <div class="map-pill-row">
+              <button class="map-pill" onclick="focusHosp('Apollo Hospitals Jubilee Hills Hyderabad')">Apollo</button>
+              <button class="map-pill" onclick="focusHosp('AIG Hospitals Gachibowli Hyderabad')">AIG</button>
+              <button class="map-pill" onclick="focusHosp('Yashoda Hospitals Secunderabad')">Yashoda</button>
+              <button class="map-pill" onclick="focusHosp('KIMS Hospitals Kondapur Hyderabad')">KIMS</button>
+              <button class="map-pill" onclick="focusHosp('Continental Hospitals Gachibowli Hyderabad')">Continental</button>
+              <button class="map-pill" onclick="focusHosp('CARE Hospitals Banjara Hills Hyderabad')">CARE</button>
+              <button class="map-pill" onclick="focusHosp('Sunshine Hospitals Secunderabad')">Sunshine</button>
+              <button class="map-pill" onclick="focusHosp('blood bank Hyderabad')">All Banks</button>
+            </div>
+          </div>
+          <div class="map-legend">
+            <span><span class="ld green"></span>High Stock</span>
+            <span><span class="ld amber"></span>Medium Stock</span>
+            <span><span class="ld red"></span>Low / Urgent</span>
+            <span><span class="ld blue"></span>24/7 Emergency</span>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: COMPATIBILITY ══════════════ -->
+    <section class="page" id="page-compat">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="ch"><span class="ct">🧬 Compatibility Reference Table</span></div>
+          <div class="cb">
+            <table class="ctable">
+              <thead><tr><th>Type</th><th>Can Receive From</th><th>Can Donate To</th></tr></thead>
+              <tbody id="compatBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">🔬 Interactive Checker</span></div>
+          <div class="cb">
+            <div class="fg"><label class="fl">Patient's Blood Type</label>
+              <div class="sw"><select class="fi" id="checkerBG" onchange="runChecker()">
+                <option value="">Select patient blood type</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select></div>
+            </div>
+            <div id="checkerResult"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- ══════════════ PAGE: AI ASSISTANT ══════════════ -->
+    <section class="page" id="page-ai">
+      <div class="card chat-card">
+        <div class="ch">
+          <span class="ct">🤖 WLR AI Assistant</span>
+          <span class="badge t">Live</span>
+        </div>
+        <div class="chat-msgs" id="chatMessages"></div>
+        <div class="chat-row">
+          <input class="fi" id="chatInput" placeholder="Ask about donors, compatibility, hospitals, SOS protocol…">
+          <button class="btn btn-red" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </section>
+ 
+  </div><!-- /main -->
+</div><!-- /shell -->
+ 
+<!-- TOASTS -->
+<div class="toast-wrap" id="toastWrap"></div>
+ 
+
+<script type="module" src="../src/script.js"></script>
+</body>
+
+</html>
