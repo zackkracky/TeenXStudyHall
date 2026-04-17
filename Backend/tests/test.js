@@ -1,4 +1,5 @@
-const { findMatchingDonors } = require("../services/matchingService");
+const { findMatchingDonors } = require("./services/matchingService");
+
 console.log("========== TESTING START ==========");
 
 //  VALID CASE

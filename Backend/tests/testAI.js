@@ -1,4 +1,5 @@
-const { findBestMatchWithPercentage } = require("../services/intelligenceService");
+const { findBestMatchWithPercentage } = require("./services/intelligenceService");
+
 console.log("========== AI TEST ==========\n");
 
 // 🔹 INPUT
@@ -27,4 +28,4 @@ if (!result.success) {
   });
 }
 
-console.log("\n========== TEST COMPLETE ==========");   
+console.log("\n========== TEST COMPLETE ==========");
