@@ -19,7 +19,7 @@ const findMatchingDonors = (bloodGroup) => {
 
   // ✅ FILTER
   const filtered = donors.filter(
-    (d) => d.blood_group === bloodGroup
+    (d) => d.blood_group === bloodGroup && d.available === true
   );
 
   console.log("📊 Filtered donors:", filtered.length);

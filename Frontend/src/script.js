@@ -1406,43 +1406,22 @@ function updateCharacterState(state) {
 
 function getReply(msg) {
   const t = msg.toLowerCase();
-<<<<<<< HEAD
-  if (t.includes('sos') || t.includes('emergency'))
-    return "🚨 <b>SOS procedure:</b> Go to <b>SOS Alert</b> page, select blood group + location, then hit <b>ACTIVATE SOS</b>. This broadcasts to all matching donors and triggers hospital + bank fallback routing.";
-  if (t.includes('compat') || t.includes('receive') || t.includes('donat'))
-    return "🧬 Use the <b>Compatibility</b> page for the full reference table. Quick facts: <b>O-</b> is the Universal Donor (gives to all), <b>AB+</b> is the Universal Recipient (receives from all). Always verify with a medical professional.";
-  if (t.includes('hospital'))
-    return `🏥 WLR tracks <b>${HOSPITALS.length} hospitals</b> in Hyderabad. Top emergency options: <b>Apollo (Jubilee Hills)</b>, <b>AIG (Gachibowli)</b>, <b>CARE (Banjara Hills)</b>. Go to <b>Hospital Map</b> to see them all on OpenStreetMap!`;
-  if (t.includes('map') || t.includes('location') || t.includes('where'))
-    return "🗺 The <b>Hospital Map</b> page shows all Hyderabad hospitals and blood banks on a live OpenStreetMap map. Click any hospital name on the sidebar to zoom in. Use the filter chips to sort by stock level.";
-  if (t.includes('bank') || t.includes('stock') || t.includes('inventory'))
-    return "🏦 Currently 4 blood banks active in Hyderabad: <b>RedCross Metro (HIGH)</b>, <b>Lifeline Unit (MEDIUM)</b>, <b>Hope Center (LOW)</b>, <b>City Hospital (MEDIUM)</b>. Check <b>Blood Banks</b> page for full inventory and AI balancing advice.";
-  if (t.includes('register') || t.includes('add donor'))
-    return "📋 Register donors on the <b>Register Donor</b> page. They'll appear in All Donors → Community tab and in search results. Eligibility: age 18–65, weight ≥50 kg, last donation ≥3 months ago.";
-  if (t.includes('api') || t.includes('backend') || t.includes('endpoint'))
-    return "🔌 Backend runs on <code>http://localhost:5001/api</code>. Endpoints: <code>POST /match-donors</code> (send blood_group) and <code>POST /notify</code> (send donors array). The API status indicator in the sidebar header shows current connection state.";
-  if (t.includes('eta') || t.includes('time') || t.includes('fast') || t.includes('arrive'))
-    return "⏱ ETA = <b>(distance ÷ 30 km/h) × 60 minutes</b>. The network average is ~9 minutes. Rank #1 donors have highest response rates and shortest estimated arrival times.";
-  if (t.includes('o-') || t.includes('universal donor'))
-    return "🩸 <b>O-</b> is the Universal Donor — can donate red blood cells to all 8 blood types. Extremely valuable in emergencies when there is no time to type the patient's blood. O- donors are in high demand!";
-=======
 
-  // Enhanced AI responses with more context and website knowledge
   if (t.includes('hello') || t.includes('hi') || t.includes('hey') || t.includes('start'))
     return "👋 <b>Welcome to WLR Blood Network!</b> I'm your AI assistant for intelligent blood logistics in Hyderabad. I can help you with donor matching, emergency protocols, compatibility questions, and navigating our platform. What would you like to know?";
 
   if (t.includes('sos') || t.includes('emergency') || t.includes('urgent')) {
-    updateCharacterState('waving'); // Urgent waving for emergency
+    updateCharacterState('waving');
     return "🚨 <b>SOS Emergency Protocol:</b><br><br>• Go to <b>SOS Alert</b> tab in the sidebar<br>• Select the required blood group and location<br>• Click <b>ACTIVATE SOS</b> to broadcast to all compatible donors<br>• System automatically alerts hospitals and blood banks as fallback<br>• Real-time tracking shows donor responses and ETAs<br><br><b>Pro tip:</b> SOS notifications go to donors within 10km first, then expand outward.";
   }
 
   if (t.includes('donor') && (t.includes('find') || t.includes('search') || t.includes('match'))) {
-    updateCharacterState('happy'); // Happy when helping find donors
+    updateCharacterState('happy');
     return "🔍 <b>Finding Donors:</b><br><br>• Use <b>Match Donors</b> page for API-powered search<br>• Enter blood group to find compatible donors<br>• Results show distance, response rate, and ETA<br>• <b>Available Now</b> tab shows only currently available donors<br>• Click <b>📱 Notify Donor</b> to contact them directly<br><br><b>AI Insight:</b> Top-ranked donors have highest response rates and shortest arrival times.";
   }
 
   if (t.includes('register') || t.includes('add') || t.includes('new donor')) {
-    updateCharacterState('waving'); // Waving to welcome new donors
+    updateCharacterState('waving');
     return "📋 <b>Registering a Donor:</b><br><br>• Go to <b>Register Donor</b> tab<br>• Fill in: Name, Blood Group, Location, Phone<br>• Location dropdown shows 200+ Hyderabad areas<br>• Set availability status and last donation date<br>• Registered donors appear in community list and search results<br><br><b>Requirements:</b> Age 18-65, weight ≥50kg, 3+ months since last donation.";
   }
 
@@ -1453,7 +1432,7 @@ function getReply(msg) {
     return `🏥 <b>Hyderabad Hospital Network:</b><br><br>• <b>${HOSPITALS.length} hospitals</b> tracked in real-time<br>• <b>Top Emergency Centers:</b><br>&nbsp;&nbsp;• Apollo Hospitals (Jubilee Hills) - Multi-specialty<br>&nbsp;&nbsp;• AIG Hospitals (Gachibowli) - Critical care<br>&nbsp;&nbsp;• CARE Hospitals (Banjara Hills) - Trauma<br>&nbsp;&nbsp;• Yashoda Hospitals (Secunderabad) - Tertiary care<br><br>• <b>Hospital Map</b> page shows live locations with stock levels<br>• Filter by stock status (High/Medium/Low)`;
 
   if (t.includes('map') || t.includes('location') || t.includes('where') || t.includes('find hospital'))
-    return "🗺 <b>Hospital Map Features:</b><br><br>• Interactive Google Maps with all Hyderabad hospitals<br>• Sidebar shows hospital list with stock levels<br>• Click hospital names to zoom and center on location<br>• Filter chips: All, High Stock (🟢), Medium (🟡), Low (🔴)<br>• Quick-focus buttons for major hospitals<br>• Stock indicators: Green=High, Yellow=Medium, Red=Low/Critical<br><br><b>Navigation:</b> Use the map to plan routes and check real-time availability.";
+    return "🗺 <b>Hospital Map Features:</b><br><br>• Interactive maps with all Hyderabad hospitals<br>• Sidebar shows hospital list with stock levels<br>• Click hospital names to zoom and center on location<br>• Filter chips: All, High Stock (🟢), Medium (🟡), Low (🔴)<br>• Quick-focus buttons for major hospitals<br>• Stock indicators: Green=High, Yellow=Medium, Red=Low/Critical<br><br><b>Navigation:</b> Use the map to plan routes and check real-time availability.";
 
   if (t.includes('bank') || t.includes('stock') || t.includes('inventory') || t.includes('supply'))
     return "🏦 <b>Blood Bank Network:</b><br><br>• <b>8 active blood banks</b> in Hyderabad:<br>&nbsp;&nbsp;• <b>Indian Red Cross Blood Bank</b> (Himayatnagar) - HIGH stock<br>&nbsp;&nbsp;• <b>Lifeline Blood Bank</b> (Secunderabad) - MEDIUM stock<br>&nbsp;&nbsp;• <b>Hope Blood Bank</b> (Mehdipatnam) - LOW stock<br>&nbsp;&nbsp;• <b>Global Hospital Blood Bank</b> (Banjara Hills) - MEDIUM stock<br>&nbsp;&nbsp;• <b>Osmania General Hospital Blood Bank</b> (Afzal Gunj) - HIGH stock<br>&nbsp;&nbsp;• <b>NIMS Blood Bank</b> (Punjagutta) - MEDIUM stock<br>&nbsp;&nbsp;• <b>Gandhi Hospital Blood Bank</b> (Musheerabad) - LOW stock<br>&nbsp;&nbsp;• <b>Kamineni Blood Bank</b> (LB Nagar) - HIGH stock<br><br>• <b>AI Balancing</b> tab shows transfer recommendations<br>• Real-time stock monitoring prevents shortages<br>• Emergency routing falls back to banks when donors unavailable";
@@ -1470,7 +1449,6 @@ function getReply(msg) {
   if (t.includes('o-') || t.includes('universal donor') || t.includes('rare'))
     return "🩸 <b>O- (Universal Donor):</b><br><br>• Can donate red blood cells to <b>ALL 8 blood types</b><br>• Only 5% of population has O- blood<br>• <b>Extremely valuable</b> in emergencies<br>• No time to type patient's blood = use O-<br>• High demand, low supply situation<br>• O- donors are medical heroes!";
 
->>>>>>> 0933a7b8176e7856dfdcd46ba583aff5665ade2f
   if (t.includes('ab+') || t.includes('universal recipient'))
     return "🩸 <b>AB+ (Universal Recipient):</b><br><br>• Can receive blood from <b>ALL 8 blood types</b><br>• Only 4% of population has AB+ blood<br>• AB+ plasma can be donated to anyone<br>• Most flexible for transfusions<br>• Rare but can accept any blood type<br>• AB+ patients have more donor options.";
 
