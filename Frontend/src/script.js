@@ -13,10 +13,13 @@ let hospitalMap = null;
 let hospitalMarkers = [];
 let userMarker = null;
 const DEFAULT_MAP_CENTER = [17.3850, 78.4867];
+const HOSPITAL_LOCATION = { lat: 17.4275, lng: 78.4069 }; // Apollo Hospitals, Jubilee Hills
+let distanceToHospital = null;
 
 function getUserLocation() {
   if (!navigator.geolocation) {
     locationStatus = 'error';
+    distanceToHospital = null;
     updateLocationStatus('❌', 'Not supported');
     console.warn('Geolocation not supported');
     toast('Location not supported by browser', 'w');
@@ -29,9 +32,11 @@ function getUserLocation() {
         lat: position.coords.latitude,
         lng: position.coords.longitude
       };
+      distanceToHospital = getDistanceFromLatLonInKm(userLocation.lat, userLocation.lng, HOSPITAL_LOCATION.lat, HOSPITAL_LOCATION.lng);
       locationStatus = 'granted';
       updateLocationStatus('✅', 'Location acquired');
       console.log('User location:', userLocation);
+      console.log('Distance to hospital:', distanceToHospital.toFixed(2), 'km');
       toast('Location access granted', 's');
       renderHospitals();
       if (document.getElementById('page-map').classList.contains('active')) {
@@ -41,6 +46,7 @@ function getUserLocation() {
     },
     (error) => {
       locationStatus = 'denied';
+      distanceToHospital = null;
       updateLocationStatus('⚠️', 'Access denied');
       console.warn('Location access denied:', error.message);
       toast('Location access denied. ETA will use default location.', 'w');
@@ -56,8 +62,12 @@ function getUserLocation() {
 function updateLocationStatus(icon, text) {
   const iconEl = document.getElementById('locationIcon');
   const textEl = document.getElementById('locationText');
+  let displayText = text;
+  if (distanceToHospital !== null) {
+    displayText += ` (${distanceToHospital.toFixed(1)} km to hospital)`;
+  }
   if (iconEl) iconEl.textContent = icon;
-  if (textEl) textEl.textContent = text;
+  if (textEl) textEl.textContent = displayText;
 }
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
@@ -948,6 +958,10 @@ function updateHospitalETAs() {
 }
 
 // Helper function to calculate distance between two lat/lng points
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1);
