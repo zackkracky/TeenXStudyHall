@@ -9,10 +9,14 @@ const BASE_URL = 'http://localhost:5001/api';
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const BLOOD_BANKS = [
-  { name:'RedCross Metro Bank',      area:'Central City',   address:'Himayatnagar, Hyderabad',   stock:'High',   eta:'12 min', phone:'040-2345-6789' },
-  { name:'Lifeline Bank Unit',       area:'North Avenue',   address:'Secunderabad',              stock:'Medium', eta:'18 min', phone:'040-2345-9876' },
-  { name:'Hope Blood Center',        area:'Metro South',    address:'Mehdipatnam, Hyderabad',    stock:'Low',    eta:'20 min', phone:'040-2346-1111' },
-  { name:'City Hospital Blood Cell', area:'West End',       address:'Banjara Hills, Hyderabad',  stock:'Medium', eta:'24 min', phone:'040-2347-2222' }
+  { name:'Indian Red Cross Blood Bank', area:'Himayatnagar',   address:'Himayatnagar, Hyderabad',   stock:'High',   eta:'12 min', phone:'040-2345-6789' },
+  { name:'Lifeline Blood Bank',         area:'Secunderabad',   address:'Secunderabad, Hyderabad',   stock:'Medium', eta:'18 min', phone:'040-2345-9876' },
+  { name:'Hope Blood Bank',             area:'Mehdipatnam',    address:'Mehdipatnam, Hyderabad',    stock:'Low',    eta:'20 min', phone:'040-2346-1111' },
+  { name:'Global Hospital Blood Bank',  area:'Banjara Hills',  address:'Banjara Hills, Hyderabad',  stock:'Medium', eta:'24 min', phone:'040-2347-2222' },
+  { name:'Osmania General Hospital Blood Bank', area:'Afzal Gunj', address:'Afzal Gunj, Hyderabad', stock:'High',   eta:'15 min', phone:'040-2460-0123' },
+  { name:'NIMS Blood Bank',             area:'Punjagutta',     address:'Punjagutta, Hyderabad',     stock:'Medium', eta:'22 min', phone:'040-2348-3333' },
+  { name:'Gandhi Hospital Blood Bank',  area:'Musheerabad',    address:'Musheerabad, Hyderabad',    stock:'Low',    eta:'25 min', phone:'040-2750-5555' },
+  { name:'Kamineni Blood Bank',         area:'LB Nagar',       address:'LB Nagar, Hyderabad',       stock:'High',   eta:'28 min', phone:'040-2402-4444' }
 ];
 
 const HOSPITALS = [
@@ -51,6 +55,43 @@ const BASE_DONORS = [
   { id:12, name:'Arjun Kapoor',  blood_group:'B+',  distance:1.2, available:true,  response_rate:0.88, score:-13.1, rank:2 }
 ];
 
+const HYDERABAD_AREAS = [
+  'Abids', 'Adarsh Nagar', 'Aghapura', 'Ameerpet', 'Aminpur', 'Anand Nagar', 'Asif Nagar', 'Attapur', 'Azamabad',
+  'Bachupally', 'Bagh Amberpet', 'Bagh Lingampally', 'Bahadurpura', 'Bala Nagar', 'Balapur', 'Bandlaguda', 'Banjara Hills',
+  'Barkatpura', 'Basheerbagh', 'Begum Bazaar', 'Begumpet', 'Bharat Nagar', 'BHEL', 'Bholakpur', 'Bolarum', 'Borabanda',
+  'Bowenpally', 'Chaderghat', 'Chaitanyapuri', 'Chandrayangutta', 'Charminar', 'Chikkadpally', 'Chintal', 'Dabeerpura',
+  'Dabirpura', 'Dammaiguda', 'Dilsukhnagar', 'Domalguda', 'ECIL', 'Erragadda', 'Falaknuma', 'Fateh Nagar', 'Film Nagar',
+  'Gachibowli', 'Gandipet', 'Golconda', 'Goshamahal', 'Gulzar Houz', 'Habsiguda', 'Hafeezpet', 'Hasthinapuram', 'Hayathnagar',
+  'Himayatnagar', 'HITEC City', 'Hussain Sagar', 'Hyderguda', 'Ibrahimpatnam', 'Jambagh', 'Jangammet', 'Jeedimetla',
+  'Jubilee Hills', 'Kachiguda', 'Karkhana', 'Karwan', 'Kavadiguda', 'Khairatabad', 'Kokapet', 'Kompally', 'Kondapur',
+  'Kothapet', 'Koti', 'KPHB', 'Kukatpally', 'LB Nagar', 'Lakdi-ka-pul', 'Lal Darwaza', 'Langar Houz', 'Lingampally', 'Madinaguda',
+  'Madhapur', 'Mahankali', 'Maheshwaram', 'Malakpet', 'Mallapur', 'Manikonda', 'Marredpally', 'Masab Tank', 'Medchal',
+  'Mehdipatnam', 'Mettuguda', 'Miyapur', 'Moghalpura', 'Moosapet', 'Moosarambagh', 'Moti Nagar', 'Moula Ali', 'Musheerabad',
+  'Nacharam', 'Nagole', 'Nallakunta', 'Nampally', 'Nanakramguda', 'Narayanguda', 'Neredmet', 'Nizampet', 'Old City',
+  'Osmania University', 'Padmarao Nagar', 'Panjagutta', 'Paradise', 'Patancheru', 'Patny', 'Pernambut', 'Picket',
+  'Pragathi Nagar', 'Punjagutta', 'Qutbullapur', 'Rajendra Nagar', 'Ramachandrapuram', 'Ramanthapur', 'Ramgopalpet',
+  'Ramnagar', 'Rasoolpura', 'Red Hills', 'Rethibowli', 'RTC X Roads', 'Safilguda', 'Saidabad', 'Sainikpuri',
+  'Salar Jung Museum', 'Sanath Nagar', 'Sangareddy', 'Sanjeeva Reddy Nagar', 'Santosh Nagar', 'Saroor Nagar', 'Secunderabad',
+  'Serilingampally', 'Shadnagar', 'Shamshabad', 'Shankarpally', 'Shapurnagar', 'Shivarampally', 'Siddipet', 'Sindhi Colony',
+  'Sitaphalmandi', 'Somajiguda', 'Srinagar Colony', 'Sultan Bazaar', 'Tarnaka', 'Tilak Nagar', 'Toli Chowki', 'Trimulgherry',
+  'Uppal', 'Vanasthalipuram', 'Venkatapuram', 'Vidyanagar', 'Vijay Nagar Colony', 'Vikrampuri', 'Warangal', 'West Marredpally',
+  'Yakutpura', 'Yousufguda', 'Alwal', 'Amberpet', 'Ashok Nagar', 'Balanagar', 'Chintalakunta', 'Dullapally', 'Gajularamaram',
+  'Jawaharlal Nehru Technological University', 'Keesara', 'Kollur', 'Malkajgiri', 'Medipally', 'Peerzadiguda', 'Rajendranagar',
+  'Shamirpet', 'Turkayamjal', 'Uppuguda', 'Vattinagulapally', 'Yerragunta', 'A.C. Guards', 'Afzal Gunj', 'Aliabad', 'Amber Nagar',
+  'Anantagiri', 'Anantaram', 'Appa Junction', 'Badangpet', 'Beeramguda', 'Bhanur', 'Bibinagar', 'Boduppal', 'Bowrampet',
+  'Chandanagar', 'Cherlapally', 'Chilakalguda', 'Chintapally', 'Dargah Hussain Shah Wali', 'Dhoolpet', 'Dundigal', 'Gandimaisamma',
+  'Ghatkesar', 'Gurramguda', 'Hakimpet', 'Hitech City', 'Hyderabad Central University', 'IDA Bollaram', 'Isnapur', 'Jaggamguda',
+  'Jawahar Nagar', 'Kadthal', 'Kandukur', 'Kapra', 'Karmanghat', 'Keshavagiri', 'Kismatpur', 'Kollapuri', 'Korremula',
+  'Kothur', 'Kowkur', 'Kuntloor', 'Lothkunta', 'Macha Bollaram', 'Malkaram', 'Manchal', 'Mangalpally', 'Manneguda',
+  'Maripeda', 'Meerpet', 'Moinabad', 'Mudchintanapalli', 'Munganoor', 'Nagaram', 'Nandigama', 'Narapally', 'Narsingi',
+  'Neelbatur', 'Nizampet', 'Osman Nagar', 'Pargi', 'Parvathapur', 'Pedda Amberpet', 'Pedda Golkonda', 'Pochampally',
+  'Pudur', 'Puppalaguda', 'Rajapet', 'Rallaguda', 'Rampally', 'Rangareddy', 'Ravulapally', 'Rayadurg', 'Sadasivpet',
+  'Safilguda', 'Saidabad', 'Sajjad Nagar', 'Saroornagar', 'Satamrai', 'Satyam Nagar', 'Serilingampally', 'Shabad',
+  'Shahabad', 'Shaikpet', 'Shankarpally', 'Shivampet', 'Siddipet', 'Srisailam Highway', 'Suchitra', 'Sultanpur', 'Tandur',
+  'Tellapur', 'Thimmapur', 'Thumkunta', 'Tukkuguda', 'Turkayamzal', 'Umdanagar', 'Venkatadri Township', 'Vijayapuri',
+  'Wanaparthy', 'Yacharam', 'Yadagirigutta', 'Yellareddyguda', 'Yenegal Khurd', 'Zahirabad'
+];
+
 const LOCAL_KEY = 'wlr_donors_v2';
 let communityDonors = [];
 let allDonors = [];
@@ -76,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderInvChart();
   updateStats();
   initChat();
+  initLocationDropdown();
+  initSearchLocationDropdown();
   // Tab switching (delegated)
   document.querySelectorAll('[data-group]').forEach(strip => {
     // handled per page via switchTab
@@ -332,7 +375,7 @@ function renderAIInsight(donors, bg) {
   box.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:11px">
       <div class="info-row"><span>⭑</span><div><b>Top Recommendation</b><br><small class="text-muted">${top.name} — ${Math.round(top.response_rate*100)}% response rate at ${top.distance} km. Est. ETA: ${eta} min.</small></div></div>
-      <div class="info-row"><span>📡</span><div><b>${u==='critical'?'CRITICAL':'Priority'} Strategy</b><br><small class="text-muted">${u==='critical'?'Simultaneously notify top 3 donors + alert nearest blood bank. Do not wait for single confirmation.':u==='priority'?'Notify top 2 donors. Keep RedCross Metro on standby.':'Standard outreach — notify sequentially, monitor responses.'}</small></div></div>
+      <div class="info-row"><span>📡</span><div><b>${u==='critical'?'CRITICAL':'Priority'} Strategy</b><br><small class="text-muted">${u==='critical'?'Simultaneously notify top 3 donors + alert nearest blood bank. Do not wait for single confirmation.':u==='priority'?'Notify top 2 donors. Keep Indian Red Cross on standby.':'Standard outreach — notify sequentially, monitor responses.'}</small></div></div>
       <div class="info-row"><span>🔮</span><div><b>Confidence Level</b><br><small class="text-muted">${donors.length>=3?'HIGH — good donor pool.':donors.length===2?'MEDIUM — activate bank fallback.':'LOW — single donor. Escalate to SOS immediately.'}</small></div></div>
     </div>
   `;
@@ -410,7 +453,7 @@ async function triggerSOS() {
       `[${now}] 🔴 SOS ACTIVATED — Group: ${bg} — Location: ${loc}`,
       top ? `[${now}] 📡 Alerts sent to ${Math.min(donors.length,3)} top donors` : `[${now}] ⚠️ No nearby donors — escalating to blood banks`,
       `[${now}] 🏥 Hospital fallback: Apollo Hospitals, Jubilee Hills`,
-      `[${now}] 🏦 Bank alert: RedCross Metro Bank contacted`,
+      `[${now}] 🏦 Bank alert: Indian Red Cross Blood Bank contacted`,
       `[${now}] 📲 Emergency SMS broadcast initiated`
     ].map(l => `<div class="info-row" style="font-family:'JetBrains Mono',monospace;font-size:.75rem">${l}</div>`).join('');
 
@@ -579,10 +622,10 @@ function renderBloodBanks() {
 
 function renderInvChart() {
   const rows = [
-    {bank:'RedCross Metro', a:'High', b:'High', o:'Medium', ab:'Low'},
-    {bank:'Lifeline Unit',  a:'Medium', b:'Low', o:'High', ab:'Medium'},
-    {bank:'Hope Center',    a:'Low', b:'Medium', o:'Low',  ab:'High'},
-    {bank:'City Hospital',  a:'Medium', b:'High', o:'Medium', ab:'Medium'}
+    {bank:'Indian Red Cross', a:'High', b:'High', o:'Medium', ab:'Low'},
+    {bank:'Lifeline Blood Bank',  a:'Medium', b:'Low', o:'High', ab:'Medium'},
+    {bank:'Hope Blood Bank',    a:'Low', b:'Medium', o:'Low',  ab:'High'},
+    {bank:'Global Hospital',  a:'Medium', b:'High', o:'Medium', ab:'Medium'}
   ];
   const col = s => s==='High'?'#10B981':s==='Medium'?'#F59E0B':'#EF4444';
   const el = document.getElementById('invChart');
@@ -670,28 +713,341 @@ function filterMapStock(chip, level) {
 }
 
 // ── COMPATIBILITY ─────────────────────────────────────────────────────────────
+// ── COMPATIBILITY ─────────────────────────────────────────────────────────────
 function renderCompatTable() {
+  // Clickable rows + bold type badge
   document.getElementById('compatBody').innerHTML = Object.entries(COMPAT).map(([t, {r,d}]) => `
-    <tr>
-      <td><strong style="color:var(--red)">${t}</strong></td>
+    <tr class="compat-row" onclick="selectCompatBG('${t}')" title="Click to check ${t}">
+      <td><strong class="compat-type-badge">${t}</strong></td>
       <td>${r.map(g=>`<span class="cp">${g}</span>`).join('')}</td>
       <td>${d.map(g=>`<span class="cp">${g}</span>`).join('')}</td>
     </tr>
   `).join('');
+
+  // 8 blood group picker buttons
+  const picker = document.getElementById('compatBgPicker');
+  if (picker) {
+    picker.innerHTML = Object.keys(COMPAT).map(g => {
+      const safeId = g.replace('+','p').replace('-','m');
+      return `<button class="compat-bg-btn" id="cbtn-${safeId}" onclick="selectCompatBG('${g}')">${g}</button>`;
+    }).join('');
+  }
 }
 
-function runChecker() {
-  const bg = document.getElementById('checkerBG').value;
-  if (!bg) return;
+function selectCompatBG(bg) {
+  // Highlight selected button
+  document.querySelectorAll('.compat-bg-btn').forEach(b => b.classList.remove('active'));
+  const safeId = 'cbtn-' + bg.replace('+','p').replace('-','m');
+  const btn = document.getElementById(safeId);
+  if (btn) btn.classList.add('active');
+
+  // Highlight selected table row
+  document.querySelectorAll('.compat-row').forEach(r => r.classList.remove('compat-row-active'));
+  document.querySelectorAll('.compat-row').forEach(r => {
+    if (r.querySelector('.compat-type-badge')?.textContent === bg)
+      r.classList.add('compat-row-active');
+  });
+
+  runChecker(bg);
+}
+
+function runChecker(bg) {
+  if (!bg || !COMPAT[bg]) return;
   const {r, d} = COMPAT[bg];
+
   document.getElementById('checkerResult').innerHTML = `
-    <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
-      <div class="info-row"><span>💉</span><div><b>${bg} patients can receive from:</b><br>${r.map(g=>`<span class="cp">${g}</span>`).join(' ')}</div></div>
-      <div class="info-row"><span>🩸</span><div><b>${bg} donors can give to:</b><br>${d.map(g=>`<span class="cp">${g}</span>`).join(' ')}</div></div>
-      ${bg==='O-'?'<div class="info-row">⭑ <span><b>Universal Donor</b> — O- can donate to all 8 blood types.</span></div>':''}
-      ${bg==='AB+'?'<div class="info-row">⭑ <span><b>Universal Recipient</b> — AB+ can receive from all 8 blood types.</span></div>':''}
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+      <div class="compat-result-row">
+        <span class="compat-result-icon">💉</span>
+        <div>
+          <div style="font-weight:700;margin-bottom:6px">${bg} patients can receive from:</div>
+          <div>${r.map(g=>`<span class="cp">${g}</span>`).join(' ')}</div>
+        </div>
+      </div>
+      <div class="compat-result-row">
+        <span class="compat-result-icon">🩸</span>
+        <div>
+          <div style="font-weight:700;margin-bottom:6px">${bg} donors can give to:</div>
+          <div>${d.map(g=>`<span class="cp">${g}</span>`).join(' ')}</div>
+        </div>
+      </div>
+      ${bg==='O-' ? `<div class="compat-special">⭑ <b>Universal Donor</b> — O- can donate to all 8 blood types. Always in critical demand.</div>` : ''}
+      ${bg==='AB+' ? `<div class="compat-special">⭑ <b>Universal Recipient</b> — AB+ can receive from all 8 blood types.</div>` : ''}
+      ${bg==='O+' ? `<div class="compat-special">ℹ️ <b>Most Common</b> — ~37% of population. High demand, good donor pool.</div>` : ''}
     </div>
   `;
+
+  // Show network availability using YOUR blood bank data
+  renderCompatNetwork(bg);
+
+  // Show WREN AI medical explanation
+  loadCompatAI(bg);
+}
+
+function renderCompatNetwork(bg) {
+  const card = document.getElementById('compatNetCard');
+  const body = document.getElementById('compatNetBody');
+  if (!card || !body) return;
+  card.style.display = 'block';
+
+  const mainType = bg.replace('+','').replace('-','');
+
+  // Use YOUR BLOOD_BANKS array
+  const bankRows = BLOOD_BANKS.map(b => {
+    const col = b.stock==='High' ? 'var(--teal)' : b.stock==='Medium' ? 'var(--amber)' : 'var(--red)';
+    const bg2 = b.stock==='High' ? 'var(--teal-soft)' : b.stock==='Medium' ? 'var(--amber-soft)' : 'var(--red-soft)';
+    return `<div class="compat-net-row">
+      <span>🏦 <b>${b.name}</b> <small style="color:var(--muted)">${b.area}</small></span>
+      <span style="background:${bg2};color:${col};padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:800">${b.stock}</span>
+    </div>`;
+  }).join('');
+
+  // Use YOUR HOSPITALS array
+  const hospRows = HOSPITALS.filter(h => h.stock === 'high').slice(0,3).map(h =>
+    `<div class="compat-net-row">
+      <span>🏥 <b>${h.name}</b> <small style="color:var(--muted)">${h.area}</small></span>
+      <span style="background:var(--teal-soft);color:var(--teal);padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:800">High Stock</span>
+    </div>`
+  ).join('');
+
+  body.innerHTML = `
+    <p class="text-muted" style="margin-bottom:12px;font-size:.8rem">Where to find <b>${bg}</b>-compatible blood right now:</p>
+    ${bankRows}
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">Hospitals with High Stock</div>
+      ${hospRows || '<div class="text-muted">No hospitals with high stock currently.</div>'}
+    </div>
+  `;
+}
+
+async function loadCompatAI(bg) {
+  const card  = document.getElementById('compatAiCard');
+  const body  = document.getElementById('compatAiBody');
+  const badge = document.getElementById('compatAiBadge');
+  if (!card || !body) return;
+
+  card.style.display = 'block';
+  badge.textContent  = 'Loading…';
+  body.innerHTML = `<div style="display:flex;align-items:center;gap:10px">
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+    <span class="text-muted">WREN is explaining the medical science…</span>
+  </div>`;
+
+  try {
+    const apiKey = sessionStorage.getItem('wlr_claude_key');
+    if (!apiKey) {
+      body.innerHTML = `<span class="text-muted">Enter your API key in the AI Assistant page first, then come back here.</span>`;
+      badge.textContent = '⚠️';
+      return;
+    }
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model:      'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{ role:'user', content:
+          `You are WREN, a medical AI on a blood logistics platform for Hyderabad hospitals.
+
+The user selected blood type ${bg}. In 3-4 short sentences explain:
+1. WHY ${bg} has these compatibility rules (ABO antigens, Rh factor biology)
+2. One practical emergency tip specific to ${bg}
+3. How common ${bg} is in the Indian population (give a percentage)
+
+Use **bold** for key terms. Be concise and medically accurate. Under 90 words.`
+        }]
+      })
+    });
+
+    const data  = await res.json();
+    const reply = data.content?.[0]?.text || 'No response.';
+
+    // Use your existing formatAIReply if available, else basic formatting
+    const formatted = typeof formatAIReply === 'function'
+      ? formatAIReply(reply)
+      : reply.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+
+    body.innerHTML  = `<div style="font-size:.84rem;line-height:1.65">${formatted}</div>`;
+    badge.textContent = '✅ WREN';
+  } catch(err) {
+    body.innerHTML  = `<span class="text-muted">AI explanation unavailable: ${err.message}</span>`;
+    badge.textContent = '⚠️';
+  }
+}
+
+// ── LOCATION DROPDOWN ──────────────────────────────────────────────────────────
+function initLocationDropdown() {
+  const input = document.getElementById('rLoc');
+  const dropdown = document.getElementById('locationDropdown');
+
+  // Show dropdown on click
+  input.addEventListener('click', () => {
+    const query = input.value.toLowerCase().trim();
+    if (query.length >= 1) {
+      const matches = HYDERABAD_AREAS.filter(area =>
+        area.toLowerCase().startsWith(query)
+      ).slice(0, 8);
+      if (matches.length > 0) {
+        dropdown.innerHTML = matches.map(area =>
+          `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+      }
+    } else {
+      // Show all locations when clicked and empty
+      const allMatches = HYDERABAD_AREAS.slice(0, 8);
+      dropdown.innerHTML = allMatches.map(area =>
+        `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
+      ).join('');
+      dropdown.style.display = 'block';
+    }
+  });
+
+  input.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (query.length < 1) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    const matches = HYDERABAD_AREAS.filter(area =>
+      area.toLowerCase().startsWith(query)
+    ).slice(0, 8); // Limit to 8 results
+
+    if (matches.length === 0) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    dropdown.innerHTML = matches.map(area =>
+      `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
+    ).join('');
+    dropdown.style.display = 'block';
+  });
+
+  input.addEventListener('blur', () => {
+    // Delay hiding to allow click on dropdown items
+    setTimeout(() => {
+      dropdown.style.display = 'none';
+    }, 150);
+  });
+
+  input.addEventListener('focus', () => {
+    const query = input.value.toLowerCase().trim();
+    if (query.length >= 1) {
+      const matches = HYDERABAD_AREAS.filter(area =>
+        area.toLowerCase().startsWith(query)
+      ).slice(0, 8);
+      if (matches.length > 0) {
+        dropdown.innerHTML = matches.map(area =>
+          `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+      }
+    } else {
+      // Show all locations when input is focused but empty
+      const allMatches = HYDERABAD_AREAS.slice(0, 8);
+      dropdown.innerHTML = allMatches.map(area =>
+        `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
+      ).join('');
+      dropdown.style.display = 'block';
+    }
+  });
+}
+
+function selectLocation(area) {
+  document.getElementById('rLoc').value = area;
+  document.getElementById('locationDropdown').style.display = 'none';
+}
+
+function initSearchLocationDropdown() {
+  const input = document.getElementById('searchLoc');
+  const dropdown = document.getElementById('searchLocationDropdown');
+
+  // Show dropdown on click
+  input.addEventListener('click', () => {
+    const query = input.value.toLowerCase().trim();
+    if (query.length >= 1) {
+      const matches = HYDERABAD_AREAS.filter(area =>
+        area.toLowerCase().startsWith(query)
+      ).slice(0, 8);
+      if (matches.length > 0) {
+        dropdown.innerHTML = matches.map(area =>
+          `<div class="dropdown-item" onclick="selectSearchLocation('${area}')">${area}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+      }
+    } else {
+      // Show all locations when clicked and empty
+      const allMatches = HYDERABAD_AREAS.slice(0, 8);
+      dropdown.innerHTML = allMatches.map(area =>
+        `<div class="dropdown-item" onclick="selectSearchLocation('${area}')">${area}</div>`
+      ).join('');
+      dropdown.style.display = 'block';
+    }
+  });
+
+  input.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (query.length < 1) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    const matches = HYDERABAD_AREAS.filter(area =>
+      area.toLowerCase().startsWith(query)
+    ).slice(0, 8); // Limit to 8 results
+
+    if (matches.length === 0) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    dropdown.innerHTML = matches.map(area =>
+      `<div class="dropdown-item" onclick="selectSearchLocation('${area}')">${area}</div>`
+    ).join('');
+    dropdown.style.display = 'block';
+  });
+
+  input.addEventListener('blur', () => {
+    // Delay hiding to allow click on dropdown items
+    setTimeout(() => {
+      dropdown.style.display = 'none';
+    }, 150);
+  });
+
+  input.addEventListener('focus', () => {
+    const query = input.value.toLowerCase().trim();
+    if (query.length >= 1) {
+      const matches = HYDERABAD_AREAS.filter(area =>
+        area.toLowerCase().startsWith(query)
+      ).slice(0, 8);
+      if (matches.length > 0) {
+        dropdown.innerHTML = matches.map(area =>
+          `<div class="dropdown-item" onclick="selectSearchLocation('${area}')">${area}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+      }
+    } else {
+      // Show all locations when input is focused but empty
+      const allMatches = HYDERABAD_AREAS.slice(0, 8);
+      dropdown.innerHTML = allMatches.map(area =>
+        `<div class="dropdown-item" onclick="selectSearchLocation('${area}')">${area}</div>`
+      ).join('');
+      dropdown.style.display = 'block';
+    }
+  });
+}
+
+function selectSearchLocation(area) {
+  document.getElementById('searchLoc').value = area;
+  document.getElementById('searchLocationDropdown').style.display = 'none';
 }
 
 // ── CHARTS ────────────────────────────────────────────────────────────────────
@@ -716,9 +1072,9 @@ function renderActivityFeed() {
   const events = [
     { ico:'📍', title:'Donor Aarav Mehta confirmed for O+', sub:'2 min ago · ETA 8 min · Central City' },
     { ico:'🏥', title:'Apollo Hospitals blood bank updated',  sub:'5 min ago · Stock: HIGH' },
-    { ico:'🔴', title:'SOS resolved — B- request via RedCross Metro Bank', sub:'18 min ago' },
+    { ico:'🔴', title:'SOS resolved — B- request via Indian Red Cross Blood Bank', sub:'18 min ago' },
     { ico:'✅', title:'New Donor: Priya Sharma (O-) · Kondapur', sub:'34 min ago' },
-    { ico:'📊', title:'Stock balancing: 2 O- units transferred to Lifeline Unit', sub:'1 hr ago · AI-triggered' },
+    { ico:'📊', title:'Stock balancing: 2 O- units transferred to Lifeline Blood Bank', sub:'1 hr ago · AI-triggered' },
     { ico:'🚨', title:'SOS activated for AB- near Secunderabad — 3 donors alerted', sub:'2 hr ago · Resolved' }
   ];
   const el = document.getElementById('activityFeed');
@@ -739,11 +1095,21 @@ function updateStats() {
 
 // ── CHAT ─────────────────────────────────────────────────────────────────────
 function initChat() {
-  addBubble('bot', "Hello! I'm the WLR AI Assistant. I can help with donor matching, blood compatibility, SOS protocols, and Hyderabad hospital information.");
-  addBubble('bot', "💡 <b>Tip:</b> Go to <b>Match Donors</b> and select a blood group to fetch live donor data from the backend API.");
+  addBubble('bot', "👋 <b>Welcome to WLR Blood Network!</b><br><br>I'm your intelligent AI assistant for emergency blood logistics in Hyderabad. I can help you navigate the platform, understand blood compatibility, activate SOS alerts, and find donors quickly.");
+  addBubble('bot', "💡 <b>Getting Started:</b><br>• <b>Match Donors</b> - Find compatible donors via live API<br>• <b>SOS Alert</b> - Emergency broadcast system<br>• <b>All Donors</b> - Browse available donors<br>• <b>Hospital Map</b> - Live Google Maps integration<br><br>What would you like to explore?");
   document.getElementById('chatInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') sendChat();
   });
+
+  // Initialize character with default state
+  updateCharacterState('waving');
+
+  // Add random blinking for more lifelike behavior
+  setInterval(() => {
+    if (Math.random() < 0.3) { // 30% chance every 3-8 seconds
+      updateCharacterState('blinking');
+    }
+  }, 3000 + Math.random() * 5000);
 }
 
 function addBubble(role, html) {
@@ -753,6 +1119,12 @@ function addBubble(role, html) {
   const msgs = document.getElementById('chatMessages');
   msgs.appendChild(el);
   msgs.scrollTop = msgs.scrollHeight;
+
+  // Character reactions based on message type
+  if (role === 'bot') {
+    updateCharacterState('talking');
+    setTimeout(() => updateCharacterState('happy'), 1000);
+  }
 }
 
 function sendChat() {
@@ -761,32 +1133,102 @@ function sendChat() {
   if (!msg) return;
   addBubble('user', msg);
   inp.value = '';
-  setTimeout(() => addBubble('bot', getReply(msg)), 450);
+
+  // Character reacts to user input
+  updateCharacterState('thinking');
+
+  setTimeout(() => {
+    const reply = getReply(msg);
+    addBubble('bot', reply);
+    updateCharacterState('talking');
+  }, 800 + Math.random() * 400); // Random delay for more natural feel
+}
+
+function updateCharacterState(state) {
+  const character = document.getElementById('aiCharacter');
+  if (!character) return;
+
+  // Remove all previous states
+  character.classList.remove('character-thinking', 'character-happy', 'character-talking', 'character-waving', 'character-blinking');
+
+  // Add new state
+  if (state) {
+    character.classList.add(`character-${state}`);
+  }
+
+  // Auto-remove temporary states after animation
+  if (state === 'talking' || state === 'thinking') {
+    setTimeout(() => {
+      character.classList.remove(`character-${state}`);
+    }, 2000);
+  }
+
+  if (state === 'happy') {
+    setTimeout(() => {
+      character.classList.remove(`character-${state}`);
+    }, 1000);
+  }
 }
 
 function getReply(msg) {
   const t = msg.toLowerCase();
-  if (t.includes('sos') || t.includes('emergency'))
-    return "🚨 <b>SOS procedure:</b> Go to <b>SOS Alert</b> page, select blood group + location, then hit <b>ACTIVATE SOS</b>. This broadcasts to all matching donors and triggers hospital + bank fallback routing.";
-  if (t.includes('compat') || t.includes('receive') || t.includes('donat'))
-    return "🧬 Use the <b>Compatibility</b> page for the full reference table. Quick facts: <b>O-</b> is the Universal Donor (gives to all), <b>AB+</b> is the Universal Recipient (receives from all). Always verify with a medical professional.";
-  if (t.includes('hospital'))
-    return `🏥 WLR tracks <b>${HOSPITALS.length} hospitals</b> in Hyderabad. Top emergency options: <b>Apollo (Jubilee Hills)</b>, <b>AIG (Gachibowli)</b>, <b>CARE (Banjara Hills)</b>. Go to <b>Hospital Map</b> to see them all on Google Maps!`;
-  if (t.includes('map') || t.includes('location') || t.includes('where'))
-    return "🗺 The <b>Hospital Map</b> page shows all Hyderabad hospitals and blood banks on a live Google Map. Click any hospital name on the sidebar to zoom in. Use the filter chips to sort by stock level.";
-  if (t.includes('bank') || t.includes('stock') || t.includes('inventory'))
-    return "🏦 Currently 4 blood banks active in Hyderabad: <b>RedCross Metro (HIGH)</b>, <b>Lifeline Unit (MEDIUM)</b>, <b>Hope Center (LOW)</b>, <b>City Hospital (MEDIUM)</b>. Check <b>Blood Banks</b> page for full inventory and AI balancing advice.";
-  if (t.includes('register') || t.includes('add donor'))
-    return "📋 Register donors on the <b>Register Donor</b> page. They'll appear in All Donors → Community tab and in search results. Eligibility: age 18–65, weight ≥50 kg, last donation ≥3 months ago.";
-  if (t.includes('api') || t.includes('backend') || t.includes('endpoint'))
-    return "🔌 Backend runs on <code>http://localhost:5001/api</code>. Endpoints: <code>POST /match-donors</code> (send blood_group) and <code>POST /notify</code> (send donors array). The API status indicator in the sidebar header shows current connection state.";
-  if (t.includes('eta') || t.includes('time') || t.includes('fast') || t.includes('arrive'))
-    return "⏱ ETA = <b>(distance ÷ 30 km/h) × 60 minutes</b>. The network average is ~9 minutes. Rank #1 donors have highest response rates and shortest estimated arrival times.";
-  if (t.includes('o-') || t.includes('universal donor'))
-    return "🩸 <b>O-</b> is the Universal Donor — can donate red blood cells to all 8 blood types. Extremely valuable in emergencies when there is no time to type the patient's blood. O- donors are in high demand!";
+
+  // Enhanced AI responses with more context and website knowledge
+  if (t.includes('hello') || t.includes('hi') || t.includes('hey') || t.includes('start'))
+    return "👋 <b>Welcome to WLR Blood Network!</b> I'm your AI assistant for intelligent blood logistics in Hyderabad. I can help you with donor matching, emergency protocols, compatibility questions, and navigating our platform. What would you like to know?";
+
+  if (t.includes('sos') || t.includes('emergency') || t.includes('urgent')) {
+    updateCharacterState('waving'); // Urgent waving for emergency
+    return "🚨 <b>SOS Emergency Protocol:</b><br><br>• Go to <b>SOS Alert</b> tab in the sidebar<br>• Select the required blood group and location<br>• Click <b>ACTIVATE SOS</b> to broadcast to all compatible donors<br>• System automatically alerts hospitals and blood banks as fallback<br>• Real-time tracking shows donor responses and ETAs<br><br><b>Pro tip:</b> SOS notifications go to donors within 10km first, then expand outward.";
+  }
+
+  if (t.includes('donor') && (t.includes('find') || t.includes('search') || t.includes('match'))) {
+    updateCharacterState('happy'); // Happy when helping find donors
+    return "🔍 <b>Finding Donors:</b><br><br>• Use <b>Match Donors</b> page for API-powered search<br>• Enter blood group to find compatible donors<br>• Results show distance, response rate, and ETA<br>• <b>Available Now</b> tab shows only currently available donors<br>• Click <b>📱 Notify Donor</b> to contact them directly<br><br><b>AI Insight:</b> Top-ranked donors have highest response rates and shortest arrival times.";
+  }
+
+  if (t.includes('register') || t.includes('add') || t.includes('new donor')) {
+    updateCharacterState('waving'); // Waving to welcome new donors
+    return "📋 <b>Registering a Donor:</b><br><br>• Go to <b>Register Donor</b> tab<br>• Fill in: Name, Blood Group, Location, Phone<br>• Location dropdown shows 200+ Hyderabad areas<br>• Set availability status and last donation date<br>• Registered donors appear in community list and search results<br><br><b>Requirements:</b> Age 18-65, weight ≥50kg, 3+ months since last donation.";
+  }
+
+  if (t.includes('compat') || t.includes('compatibility') || t.includes('receive') || t.includes('donate') || t.includes('blood type'))
+    return "🧬 <b>Blood Compatibility Guide:</b><br><br>• Visit <b>Compatibility</b> page for full reference table<br>• <b>O- (Universal Donor):</b> Can donate to ALL blood types<br>• <b>AB+ (Universal Recipient):</b> Can receive from ALL blood types<br>• Interactive checker shows who can receive from/donate to specific types<br><br><b>Critical:</b> Always verify compatibility with medical professionals. This is for informational purposes only.";
+
+  if (t.includes('hospital') || t.includes('clinic') || t.includes('medical'))
+    return `🏥 <b>Hyderabad Hospital Network:</b><br><br>• <b>${HOSPITALS.length} hospitals</b> tracked in real-time<br>• <b>Top Emergency Centers:</b><br>&nbsp;&nbsp;• Apollo Hospitals (Jubilee Hills) - Multi-specialty<br>&nbsp;&nbsp;• AIG Hospitals (Gachibowli) - Critical care<br>&nbsp;&nbsp;• CARE Hospitals (Banjara Hills) - Trauma<br>&nbsp;&nbsp;• Yashoda Hospitals (Secunderabad) - Tertiary care<br><br>• <b>Hospital Map</b> page shows live locations with stock levels<br>• Filter by stock status (High/Medium/Low)`;
+
+  if (t.includes('map') || t.includes('location') || t.includes('where') || t.includes('find hospital'))
+    return "🗺 <b>Hospital Map Features:</b><br><br>• Interactive Google Maps with all Hyderabad hospitals<br>• Sidebar shows hospital list with stock levels<br>• Click hospital names to zoom and center on location<br>• Filter chips: All, High Stock (🟢), Medium (🟡), Low (🔴)<br>• Quick-focus buttons for major hospitals<br>• Stock indicators: Green=High, Yellow=Medium, Red=Low/Critical<br><br><b>Navigation:</b> Use the map to plan routes and check real-time availability.";
+
+  if (t.includes('bank') || t.includes('stock') || t.includes('inventory') || t.includes('supply'))
+    return "🏦 <b>Blood Bank Network:</b><br><br>• <b>8 active blood banks</b> in Hyderabad:<br>&nbsp;&nbsp;• <b>Indian Red Cross Blood Bank</b> (Himayatnagar) - HIGH stock<br>&nbsp;&nbsp;• <b>Lifeline Blood Bank</b> (Secunderabad) - MEDIUM stock<br>&nbsp;&nbsp;• <b>Hope Blood Bank</b> (Mehdipatnam) - LOW stock<br>&nbsp;&nbsp;• <b>Global Hospital Blood Bank</b> (Banjara Hills) - MEDIUM stock<br>&nbsp;&nbsp;• <b>Osmania General Hospital Blood Bank</b> (Afzal Gunj) - HIGH stock<br>&nbsp;&nbsp;• <b>NIMS Blood Bank</b> (Punjagutta) - MEDIUM stock<br>&nbsp;&nbsp;• <b>Gandhi Hospital Blood Bank</b> (Musheerabad) - LOW stock<br>&nbsp;&nbsp;• <b>Kamineni Blood Bank</b> (LB Nagar) - HIGH stock<br><br>• <b>AI Balancing</b> tab shows transfer recommendations<br>• Real-time stock monitoring prevents shortages<br>• Emergency routing falls back to banks when donors unavailable";
+
+  if (t.includes('eta') || t.includes('time') || t.includes('arrive') || t.includes('fast'))
+    return "⏱ <b>ETA & Response Times:</b><br><br>• <b>Calculation:</b> (Distance ÷ 30 km/h) × 60 minutes<br>• <b>Network Average:</b> ~9 minutes response time<br>• <b>Rank #1 Donors:</b> Highest response rates (85%+)<br>• <b>Factors:</b> Traffic, donor availability, response rate<br>• <b>Real-time:</b> ETAs update as donors confirm/decline<br><br><b>AI Optimization:</b> System prioritizes closest, most reliable donors.";
+
+  if (t.includes('api') || t.includes('backend') || t.includes('endpoint') || t.includes('technical'))
+    return "🔌 <b>Technical Architecture:</b><br><br>• <b>Backend:</b> Node.js + Express on port 5001<br>• <b>API Endpoints:</b><br>&nbsp;&nbsp;• <code>POST /api/match-donors</code> - Find compatible donors<br>&nbsp;&nbsp;• <code>POST /api/notify</code> - Send notifications<br>&nbsp;&nbsp;• <code>GET /api/donors</code> - Get all donors<br>• <b>Data:</b> JSON file storage with real-time updates<br>• <b>Status:</b> Check sidebar indicator for connection<br><br><b>Demo Mode:</b> Works offline with sample data.";
+
+  if (t.includes('available') || t.includes('now') || t.includes('current'))
+    return "✅ <b>Available Donors:</b><br><br>• <b>All Donors → Available Now</b> tab shows only active donors<br>• Availability status set during registration<br>• Real-time updates as donors change status<br>• SOS alerts only go to available donors<br>• Community donors show registration status<br><br><b>Tip:</b> Check this tab for immediate blood needs.";
+
+  if (t.includes('o-') || t.includes('universal donor') || t.includes('rare'))
+    return "🩸 <b>O- (Universal Donor):</b><br><br>• Can donate red blood cells to <b>ALL 8 blood types</b><br>• Only 5% of population has O- blood<br>• <b>Extremely valuable</b> in emergencies<br>• No time to type patient's blood = use O-<br>• High demand, low supply situation<br>• O- donors are medical heroes!";
+
   if (t.includes('ab+') || t.includes('universal recipient'))
-    return "🩸 <b>AB+</b> is the Universal Recipient — can receive blood from all 8 blood types. AB+ plasma can also be donated to anyone. Only about 4% of the population has AB+.";
-  return "I can assist with <b>donor matching</b>, <b>SOS protocols</b>, <b>blood compatibility</b>, <b>hospital info</b>, <b>map navigation</b>, and <b>API integration</b>. Try asking: <em>'How does SOS work?'</em> or <em>'Show me hospitals on the map'</em>.";
+    return "🩸 <b>AB+ (Universal Recipient):</b><br><br>• Can receive blood from <b>ALL 8 blood types</b><br>• Only 4% of population has AB+ blood<br>• AB+ plasma can be donated to anyone<br>• Most flexible for transfusions<br>• Rare but can accept any blood type<br>• AB+ patients have more donor options.";
+
+  if (t.includes('how') && (t.includes('work') || t.includes('system') || t.includes('platform')))
+    return "⚙️ <b>How WLR Blood Network Works:</b><br><br>1. <b>Registration:</b> Donors join with blood type & location<br>2. <b>Matching:</b> AI finds compatible donors by distance/response rate<br>3. <b>Notification:</b> SMS/email alerts to donors with ETA<br>4. <b>Tracking:</b> Real-time updates on donor responses<br>5. <b>Fallback:</b> Automatic routing to hospitals/blood banks<br>6. <b>AI Insights:</b> Smart recommendations for optimal routing<br><br><b>Goal:</b> Get blood from donor to patient in under 30 minutes.";
+
+  if (t.includes('help') || t.includes('what') || t.includes('can you') || t.includes('assist')) {
+    updateCharacterState('waving'); // Waving to offer help
+    return "🤖 <b>I can help you with:</b><br><br>• <b>🚨 Emergency SOS:</b> How to activate emergency alerts<br>• <b>🔍 Donor Search:</b> Finding and contacting donors<br>• <b>📋 Registration:</b> Adding new donors to the network<br>• <b>🧬 Compatibility:</b> Blood type matching rules<br>• <b>🏥 Hospitals:</b> Finding medical facilities<br>• <b>🗺 Maps:</b> Navigating Hyderabad healthcare<br>• <b>🏦 Blood Banks:</b> Stock levels and transfers<br>• <b>⏱ ETAs:</b> Understanding response times<br>• <b>🔌 Technical:</b> API and backend details<br><br><b>Try asking:</b> 'How does SOS work?' or 'Show me available donors'";
+  }
+
+  // Default response with suggestions
+  return "🤔 <b>I understand you're asking about:</b> '" + msg + "'<br><br>I specialize in WLR Blood Network operations. Try asking about:<br>• <em>'How does SOS work?'</em><br>• <em>'Find donors for O+ blood'</em><br>• <em>'Show me hospitals on the map'</em><br>• <em>'What is blood compatibility?'</em><br>• <em>'How to register a donor'</em><br><br>Or visit the relevant page in the sidebar for hands-on experience!";
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────

@@ -133,7 +133,7 @@
           <div class="hs-card red">🩸<br><strong id="hStatDonors">—</strong><br><small>Donors</small></div>
           <div class="hs-card amber">⏱<br><strong>9 min</strong><br><small>Avg ETA</small></div>
           <div class="hs-card teal">🏥<br><strong>7</strong><br><small>Hospitals</small></div>
-          <div class="hs-card blue">🏦<br><strong>4</strong><br><small>Blood Banks</small></div>
+          <div class="hs-card blue">🏦<br><strong>8</strong><br><small>Blood Banks</small></div>
         </div>
       </div>
  
@@ -149,7 +149,7 @@
           <div class="sc c-red"><div class="sc-ico">🩸</div><div class="sc-v" id="scDonors">—</div><div class="sc-l">Total Donors</div><div class="sc-d">↑ Active today</div></div>
           <div class="sc c-amber"><div class="sc-ico">⏱</div><div class="sc-v">9 min</div><div class="sc-l">Avg Response</div><div class="sc-d">↓ 2 min faster</div></div>
           <div class="sc c-teal"><div class="sc-ico">🏥</div><div class="sc-v">7</div><div class="sc-l">Hospitals Ready</div><div class="sc-d">24/7 coverage</div></div>
-          <div class="sc c-blue"><div class="sc-ico">🏦</div><div class="sc-v">4</div><div class="sc-l">Blood Banks</div><div class="sc-d">All operational</div></div>
+          <div class="sc c-blue"><div class="sc-ico">🏦</div><div class="sc-v">8</div><div class="sc-l">Blood Banks</div><div class="sc-d">All operational</div></div>
         </div>
         <div class="two-col">
           <div class="card">
@@ -220,6 +220,7 @@
                 </div>
                 <div class="fg"><label class="fl">Location (optional)</label>
                   <input class="fi" id="searchLoc" placeholder="e.g. Gachibowli, Kondapur…">
+                  <div class="dropdown" id="searchLocationDropdown"></div>
                 </div>
                 <div class="fg"><label class="fl">Units Required</label>
                   <input class="fi" id="searchUnits" type="number" min="1" max="10" value="1">
@@ -295,7 +296,7 @@
             <div class="info-row"><span>🔴</span><div><b>Status</b><br><small class="text-muted" id="sosStat">No active broadcast</small></div></div>
             <div class="info-row"><span>🧑‍⚕️</span><div><b>Top Donor Route</b><br><small class="text-muted" id="sosTopD">Awaiting search</small></div></div>
             <div class="info-row"><span>🏥</span><div><b>Hospital Fallback</b><br><small class="text-muted">Apollo Hospitals, Jubilee Hills</small></div></div>
-            <div class="info-row"><span>🏦</span><div><b>Bank Fallback</b><br><small class="text-muted">RedCross Metro Bank — HIGH stock</small></div></div>
+            <div class="info-row"><span>🏦</span><div><b>Bank Fallback</b><br><small class="text-muted">Indian Red Cross Blood Bank — HIGH stock</small></div></div>
           </div>
         </div>
       </div>
@@ -349,7 +350,7 @@
             <div class="reg-grid">
               <div class="fg"><label class="fl">Full Name *</label><input class="fi" id="rName" placeholder="Enter full name"></div>
               <div class="fg"><label class="fl">Blood Group *</label><div class="sw"><select class="fi" id="rBG"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div></div>
-              <div class="fg"><label class="fl">Location / Area *</label><input class="fi" id="rLoc" placeholder="e.g. Gachibowli"></div>
+              <div class="fg"><label class="fl">Location / Area *</label><input class="fi" id="rLoc" placeholder="e.g. Gachibowli"><div class="dropdown" id="locationDropdown"></div></div>
               <div class="fg"><label class="fl">Phone Number *</label><input class="fi" id="rPhone" placeholder="10-digit number" type="tel"></div>
               <div class="fg"><label class="fl">Last Donation</label><input class="fi" id="rLast" placeholder="e.g. 3 months ago"></div>
               <div class="fg"><label class="fl">Availability</label><div class="sw"><select class="fi" id="rAvail"><option value="true">Available Now</option><option value="false">Unavailable</option></select></div></div>
@@ -399,9 +400,9 @@
           <div class="cb">
             <p class="text-muted" style="margin-bottom:14px;font-size:.85rem">AI-generated recommendations to prevent local shortages and inventory overcrowding.</p>
             <div class="info-row">📤 <span><b>Transfer</b> 2 O- units: Metro South → North Avenue (stock mismatch)</span></div>
-            <div class="info-row">📥 <span><b>Request restock</b> AB+ at Hope Blood Center — currently LOW</span></div>
-            <div class="info-row">✅ <span><b>No action</b> needed: RedCross Metro Bank is HIGH across all types</span></div>
-            <div class="info-row">⚠️ <span><b>Monitor</b> City Hospital West End — B- approaching critical low</span></div>
+            <div class="info-row">📥 <span><b>Request restock</b> AB+ at Hope Blood Bank — currently LOW</span></div>
+            <div class="info-row">✅ <span><b>No action</b> needed: Indian Red Cross Blood Bank is HIGH across all types</span></div>
+            <div class="info-row">⚠️ <span><b>Monitor</b> Global Hospital Blood Bank — B- approaching critical low</span></div>
             <div class="info-row">📡 <span><b>Alert O-</b> eligible donors in North Ave zone to donate this week</span></div>
           </div>
         </div>
@@ -488,29 +489,64 @@
     </section>
  
     <!-- ══════════════ PAGE: COMPATIBILITY ══════════════ -->
+    <!-- ══════════════════════════════════════
+         PAGE: COMPATIBILITY
+    ══════════════════════════════════════ -->
     <section class="page" id="page-compat">
-      <div class="two-col" style="align-items:start">
+      <div class="compat-layout">
+
+        <!-- LEFT: Reference Table -->
         <div class="card">
-          <div class="ch"><span class="ct">🧬 Compatibility Reference Table</span></div>
-          <div class="cb">
+          <div class="ch">
+            <span class="ct">🧬 Compatibility Reference Table</span>
+            <span style="font-size:.72rem;color:var(--muted)">Click any row to check →</span>
+          </div>
+          <div class="cb" style="padding:0">
             <table class="ctable">
               <thead><tr><th>Type</th><th>Can Receive From</th><th>Can Donate To</th></tr></thead>
               <tbody id="compatBody"></tbody>
             </table>
           </div>
         </div>
-        <div class="card">
-          <div class="ch"><span class="ct">🔬 Interactive Checker</span></div>
-          <div class="cb">
-            <div class="fg"><label class="fl">Patient's Blood Type</label>
-              <div class="sw"><select class="fi" id="checkerBG" onchange="runChecker()">
-                <option value="">Select patient blood type</option>
-                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
-              </select></div>
+
+        <!-- RIGHT column -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- Blood type picker + result -->
+          <div class="card">
+            <div class="ch"><span class="ct">🔬 Interactive Checker</span></div>
+            <div class="cb">
+              <div class="fg">
+                <label class="fl">Select Patient's Blood Type</label>
+                <div class="compat-bg-grid" id="compatBgPicker"></div>
+              </div>
+              <div id="checkerResult"></div>
             </div>
-            <div id="checkerResult"></div>
           </div>
+
+          <!-- WREN AI Medical Explanation (hidden until blood type selected) -->
+          <div class="card" id="compatAiCard" style="display:none">
+            <div class="ch">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;background:linear-gradient(135deg,#8B0D21,#C41230);border-radius:8px;display:grid;place-items:center;color:white;font-weight:800;font-size:.85rem;flex-shrink:0">W</div>
+                <span class="ct">WREN — Medical Explanation</span>
+              </div>
+              <span class="badge r" id="compatAiBadge">AI</span>
+            </div>
+            <div class="cb" id="compatAiBody">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+                <span class="text-muted">WREN is explaining the medical science…</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Network availability (hidden until blood type selected) -->
+          <div class="card" id="compatNetCard" style="display:none">
+            <div class="ch"><span class="ct">🏥 Network Availability</span></div>
+            <div class="cb" id="compatNetBody"></div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -522,6 +558,34 @@
           <span class="ct">🤖 WLR AI Assistant</span>
           <span class="badge t">Live</span>
         </div>
+
+        <!-- Cartoon Character -->
+        <div class="ai-character" id="aiCharacter">
+          <div class="character-body">
+            <div class="character-head">
+              <div class="character-eyes">
+                <div class="eye left-eye" id="leftEye">●</div>
+                <div class="eye right-eye" id="rightEye">●</div>
+              </div>
+              <div class="character-mouth" id="characterMouth">◡</div>
+            </div>
+            <div class="character-torso">
+              <div class="character-arms">
+                <div class="arm left-arm" id="leftArm">┗</div>
+                <div class="arm right-arm" id="rightArm">┛</div>
+              </div>
+              <div class="character-chest">
+                <div class="chest-light" id="chestLight">●</div>
+              </div>
+            </div>
+            <div class="character-legs">
+              <div class="leg left-leg">┃</div>
+              <div class="leg right-leg">┃</div>
+            </div>
+          </div>
+          <div class="character-shadow"></div>
+        </div>
+
         <div class="chat-msgs" id="chatMessages"></div>
         <div class="chat-row">
           <input class="fi" id="chatInput" placeholder="Ask about donors, compatibility, hospitals, SOS protocol…">
