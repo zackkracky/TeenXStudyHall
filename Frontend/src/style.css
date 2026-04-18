@@ -1161,3 +1161,65 @@ body {
 @media (max-width: 860px) {
   .compat-layout { grid-template-columns: 1fr; }
 }
+
+/* ── FILE UPLOAD ── */
+.file-upload-area {
+  border: 2px dashed var(--red-mid);
+  border-radius: 12px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s ease;
+  background: var(--red-soft);
+}
+.file-upload-area:hover {
+  border-color: var(--red);
+  background: rgba(196, 18, 48, 0.08);
+}
+.file-upload-area p {
+  font-size: 0.85rem;
+  color: var(--slate-l);
+}
+
+#filePreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+#filePreview img {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.file-preview-pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+.pdf-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--red-soft);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--red);
+}
+
+.pdf-name {
+  font-size: 0.85rem;
+  color: var(--slate);
+  font-weight: 600;
+  max-width: 200px;
+  word-break: break-word;
+}

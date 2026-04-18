@@ -361,6 +361,19 @@
               <div class="fg"><label class="fl">Availability</label><div class="sw"><select class="fi" id="rAvail"><option value="true">Available Now</option><option value="false">Unavailable</option></select></div></div>
               <div class="fg"><label class="fl">Age</label><input class="fi" id="rAge" placeholder="e.g. 28" type="number" min="18" max="65"></div>
               <div class="fg"><label class="fl">Weight (kg)</label><input class="fi" id="rWeight" placeholder="Min 50 kg" type="number" min="50"></div>
+              <div class="fg"><label class="fl">Medical Document *</label>
+                <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('rFile').click()">
+                  <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;opacity:0.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  <p style="margin:0;font-size:0.85rem;color:var(--muted)">Click to upload PDF, JPEG, or JPG</p>
+                  <p style="margin:4px 0 0;font-size:0.7rem;color:var(--muted)">or drag and drop</p>
+                </div>
+                <input type="file" id="rFile" accept=".pdf,.jpeg,.jpg,.JPG,.JPEG,.PDF" style="display:none" onchange="handleFileUpload(this)">
+                <div id="filePreviewContainer" style="margin-top:12px;display:none">
+                  <div style="font-size:0.8rem;font-weight:700;color:var(--muted);margin-bottom:8px">Preview:</div>
+                  <div id="filePreview" style="border:1px solid var(--line);border-radius:8px;overflow:hidden;max-height:300px;background:var(--soft)"></div>
+                  <button type="button" class="btn btn-sm" style="margin-top:8px;background:var(--line);color:var(--text);border:none;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer" onclick="clearFileUpload()">Remove File</button>
+                </div>
+              </div>
             </div>
             <button class="btn btn-red wf" style="margin-top:10px" onclick="registerDonor()">Register into Network</button>
           </div>

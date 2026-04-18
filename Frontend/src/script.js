@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initChat();
   initLocationDropdown();
   initSearchLocationDropdown();
+  initFileUploadDragDrop();
   // Tab switching (delegated)
   document.querySelectorAll('[data-group]').forEach(strip => {
     // handled per page via switchTab
@@ -609,7 +610,10 @@ async function registerDonor() {
   const bg    = document.getElementById('rBG').value;
   const loc   = document.getElementById('rLoc').value.trim();
   const phone = document.getElementById('rPhone').value.trim();
+  const fileInput = document.getElementById('rFile');
+  
   if (!name || !bg || !loc || !phone) { toast('Fill all required fields (*)', 'w'); return; }
+  if (!fileInput.files || fileInput.files.length === 0) { toast('Medical document is required', 'e'); return; }
 
   const donor = {
     name,
@@ -657,6 +661,104 @@ async function registerDonor() {
   renderCommunityDonors();
   updateStats();
   ['rName','rBG','rLoc','rPhone','rLast'].forEach(id => document.getElementById(id).value = '');
+  clearFileUpload();
+}
+
+function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
+  const maxSize = 5 * 1024 * 1024; // 5MB
+
+  if (!validTypes.includes(file.type)) {
+    toast('Please upload a PDF or JPEG/JPG file', 'w');
+    input.value = '';
+    return;
+  }
+
+  if (file.size > maxSize) {
+    toast('File size must be less than 5MB', 'w');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const filePreviewContainer = document.getElementById('filePreviewContainer');
+    const filePreview = document.getElementById('filePreview');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+
+    fileUploadArea.style.display = 'none';
+    filePreviewContainer.style.display = 'block';
+
+    if (file.type === 'application/pdf') {
+      filePreview.innerHTML = `
+        <div class="file-preview-pdf">
+          <div class="pdf-icon">📄</div>
+          <div class="pdf-name">${file.name}</div>
+          <div style="font-size:0.75rem;color:var(--muted)">${(file.size / 1024).toFixed(1)} KB</div>
+        </div>
+      `;
+    } else {
+      filePreview.innerHTML = `<img src="${e.target.result}" alt="Document preview">`;
+    }
+
+    document.getElementById('rFile').dataset.uploaded = 'true';
+    toast('File uploaded successfully', 's');
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function clearFileUpload() {
+  document.getElementById('rFile').value = '';
+  document.getElementById('rFile').dataset.uploaded = 'false';
+  document.getElementById('filePreviewContainer').style.display = 'none';
+  document.getElementById('fileUploadArea').style.display = 'block';
+  document.getElementById('filePreview').innerHTML = '';
+}
+
+// Drag and drop support
+function initFileUploadDragDrop() {
+  const fileUploadArea = document.getElementById('fileUploadArea');
+  if (!fileUploadArea) return;
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    fileUploadArea.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    fileUploadArea.addEventListener(eventName, highlight, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    fileUploadArea.addEventListener(eventName, unhighlight, false);
+  });
+
+  function highlight(e) {
+    fileUploadArea.style.borderColor = 'var(--red)';
+    fileUploadArea.style.background = 'rgba(196, 18, 48, 0.12)';
+  }
+
+  function unhighlight(e) {
+    fileUploadArea.style.borderColor = 'var(--red-mid)';
+    fileUploadArea.style.background = 'var(--red-soft)';
+  }
+
+  fileUploadArea.addEventListener('drop', handleDrop, false);
+
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    document.getElementById('rFile').files = files;
+    handleFileUpload(document.getElementById('rFile'));
+  }
 }
 
 function estimateDonorDistance(loc) {
