@@ -23,12 +23,13 @@ app.get("/api", (req, res) => {
     endpoints: {
       "GET /api/donors": "Return the full donor list from donors.json",
       "POST /api/match-donors": "Find matching donors by blood group",
-      "POST /api/notify": "Notify selected donors"
+      "POST /api/notify": "Notify selected donors",
+      "POST /api/sos": "Send an SOS SMS alert"
     }
   });
 });
 
-const PORT = 5001;
+const PORT = 5501;
 
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

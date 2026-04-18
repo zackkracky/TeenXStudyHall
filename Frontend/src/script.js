@@ -6,18 +6,9 @@
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const BASE_URL = 'http://localhost:5001/api';
-const GEMINI_KEY = 'AIzaSyAT5Fa36fC96VN2NLQnqoYb09_31ZHDVwg'; // paste your new key
 
 async function callGemini(prompt, base64Image = null, mimeType = 'image/jpeg') {
-  const parts = [];
-  if (base64Image) parts.push({ inline_data: { mime_type: mimeType, data: base64Image } });
-  parts.push({ text: prompt });
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
-    { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{ parts }] }) }
-  );
-  if (!res.ok) { const err = await res.json().catch(()=>({})); throw new Error(err.error?.message || `HTTP ${res.status}`); }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  throw new Error('AI features are disabled in the browser until a server-side key is configured.');
 }
 
 function formatGeminiReply(text) {
@@ -33,6 +24,11 @@ function formatGeminiReply(text) {
 // ── LOCATION ──────────────────────────────────────────────────────────────────
 let userLocation = null;
 let locationStatus = 'unknown'; // 'unknown', 'granted', 'denied', 'error'
+let selectedDonorLocation = null;
+let donorLocationMode = 'gps'; // defaults to GPS selection mode
+let locationSuggestions = [];
+const locationSearchCache = {};
+let locationSearchTimer = null;
 let hospitalMap = null;
 let hospitalMarkers = [];
 let userMarker = null;
@@ -44,6 +40,7 @@ function getUserLocation() {
   if (!navigator.geolocation) {
     locationStatus = 'error';
     distanceToHospital = null;
+    updateDonorDistances();
     updateLocationStatus('❌', 'Not supported');
     console.warn('Geolocation not supported');
     toast('Location not supported by browser', 'w');
@@ -57,12 +54,17 @@ function getUserLocation() {
         lng: position.coords.longitude
       };
       distanceToHospital = getDistanceFromLatLonInKm(userLocation.lat, userLocation.lng, HOSPITAL_LOCATION.lat, HOSPITAL_LOCATION.lng);
+      updateDonorDistances();
+      updateBloodBankETAs();
       locationStatus = 'granted';
       updateLocationStatus('✅', 'Location acquired');
       console.log('User location:', userLocation);
       console.log('Distance to hospital:', distanceToHospital.toFixed(2), 'km');
       toast('Location access granted', 's');
       renderHospitals();
+      renderAllDonors();
+      renderCommunityDonors();
+      renderBloodBanks();
       if (document.getElementById('page-map').classList.contains('active')) {
         renderMapHospList();
         updateMapMarkers();
@@ -71,6 +73,7 @@ function getUserLocation() {
     (error) => {
       locationStatus = 'denied';
       distanceToHospital = null;
+      updateDonorDistances();
       updateLocationStatus('⚠️', 'Access denied');
       console.warn('Location access denied:', error.message);
       toast('Location access denied. ETA will use default location.', 'w');
@@ -96,14 +99,14 @@ function updateLocationStatus(icon, text) {
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const BLOOD_BANKS = [
-  { name:'Indian Red Cross Blood Bank', area:'Himayatnagar',   address:'Himayatnagar, Hyderabad',   stock:'High',   eta:'12 min', phone:'040-2345-6789' },
-  { name:'Lifeline Blood Bank',         area:'Secunderabad',   address:'Secunderabad, Hyderabad',   stock:'Medium', eta:'18 min', phone:'040-2345-9876' },
-  { name:'Hope Blood Bank',             area:'Mehdipatnam',    address:'Mehdipatnam, Hyderabad',    stock:'Low',    eta:'20 min', phone:'040-2346-1111' },
-  { name:'Global Hospital Blood Bank',  area:'Banjara Hills',  address:'Banjara Hills, Hyderabad',  stock:'Medium', eta:'24 min', phone:'040-2347-2222' },
-  { name:'Osmania General Hospital Blood Bank', area:'Afzal Gunj', address:'Afzal Gunj, Hyderabad', stock:'High',   eta:'15 min', phone:'040-2460-0123' },
-  { name:'NIMS Blood Bank',             area:'Punjagutta',     address:'Punjagutta, Hyderabad',     stock:'Medium', eta:'22 min', phone:'040-2348-3333' },
-  { name:'Gandhi Hospital Blood Bank',  area:'Musheerabad',    address:'Musheerabad, Hyderabad',    stock:'Low',    eta:'25 min', phone:'040-2750-5555' },
-  { name:'Kamineni Blood Bank',         area:'LB Nagar',       address:'LB Nagar, Hyderabad',       stock:'High',   eta:'28 min', phone:'040-2402-4444' }
+  { name:'Indian Red Cross Blood Bank', area:'Himayatnagar',   address:'Himayatnagar, Hyderabad',   stock:'High',   eta:'12 min', phone:'040-2345-6789', lat:17.4014, lng:78.4851 },
+  { name:'Lifeline Blood Bank',         area:'Secunderabad',   address:'Secunderabad, Hyderabad',   stock:'Medium', eta:'18 min', phone:'040-2345-9876', lat:17.4399, lng:78.4983 },
+  { name:'Hope Blood Bank',             area:'Mehdipatnam',    address:'Mehdipatnam, Hyderabad',    stock:'Low',    eta:'20 min', phone:'040-2346-1111', lat:17.3919, lng:78.4378 },
+  { name:'Global Hospital Blood Bank',  area:'Banjara Hills',  address:'Banjara Hills, Hyderabad',  stock:'Medium', eta:'24 min', phone:'040-2347-2222', lat:17.4167, lng:78.4344 },
+  { name:'Osmania General Hospital Blood Bank', area:'Afzal Gunj', address:'Afzal Gunj, Hyderabad', stock:'High',   eta:'15 min', phone:'040-2460-0123', lat:17.3833, lng:78.4833 },
+  { name:'NIMS Blood Bank',             area:'Punjagutta',     address:'Punjagutta, Hyderabad',     stock:'Medium', eta:'22 min', phone:'040-2348-3333', lat:17.4250, lng:78.4567 },
+  { name:'Gandhi Hospital Blood Bank',  area:'Musheerabad',    address:'Musheerabad, Hyderabad',    stock:'Low',    eta:'25 min', phone:'040-2750-5555', lat:17.4219, lng:78.4989 },
+  { name:'Kamineni Blood Bank',         area:'LB Nagar',       address:'LB Nagar, Hyderabad',       stock:'High',   eta:'28 min', phone:'040-2402-4444', lat:17.3477, lng:78.5578 }
 ];
 
 const HOSPITALS = [
@@ -128,18 +131,18 @@ const COMPAT = {
 };
 
 const BASE_DONORS = [
-  { id:1,  name:'Aarav Mehta',   blood_group:'O+',  distance:1.8, available:true,  response_rate:0.96, score:-14.2, rank:1 },
-  { id:2,  name:'Riya Nair',     blood_group:'A+',  distance:2.1, available:true,  response_rate:0.90, score:-12.5, rank:1 },
-  { id:3,  name:'Kabir Singh',   blood_group:'B+',  distance:4.9, available:true,  response_rate:0.84, score:-10.2, rank:1 },
-  { id:4,  name:'Ananya Das',    blood_group:'AB+', distance:7.2, available:true,  response_rate:0.89, score:-11.0, rank:1 },
-  { id:5,  name:'Neha Iyer',     blood_group:'O-',  distance:3.4, available:true,  response_rate:0.98, score:-15.1, rank:1 },
-  { id:6,  name:'Vikram Rao',    blood_group:'A-',  distance:5.6, available:false, response_rate:0.62, score:-7.1,  rank:1 },
-  { id:7,  name:'Zoya Khan',     blood_group:'B-',  distance:6.1, available:true,  response_rate:0.81, score:-9.4,  rank:1 },
-  { id:8,  name:'Ishaan Patel',  blood_group:'AB-', distance:8.7, available:true,  response_rate:0.77, score:-8.8,  rank:1 },
-  { id:9,  name:'Simran Gill',   blood_group:'O+',  distance:4.3, available:true,  response_rate:0.92, score:-11.8, rank:2 },
-  { id:10, name:'Dev Joshi',     blood_group:'A+',  distance:9.5, available:true,  response_rate:0.76, score:-8.1,  rank:2 },
-  { id:11, name:'Mira Thomas',   blood_group:'O-',  distance:6.8, available:true,  response_rate:0.95, score:-12.2, rank:2 },
-  { id:12, name:'Arjun Kapoor',  blood_group:'B+',  distance:1.2, available:true,  response_rate:0.88, score:-13.1, rank:2 }
+  { id:1,  name:'Aarav Mehta',   blood_group:'O+',  distance:1.8, available:true,  response_rate:0.96, score:-14.2, rank:1, lat:17.3850, lng:78.4867 },
+  { id:2,  name:'Riya Nair',     blood_group:'A+',  distance:2.1, available:true,  response_rate:0.90, score:-12.5, rank:1, lat:17.3950, lng:78.4967 },
+  { id:3,  name:'Kabir Singh',   blood_group:'B+',  distance:4.9, available:true,  response_rate:0.84, score:-10.2, rank:1, lat:17.4050, lng:78.5067 },
+  { id:4,  name:'Ananya Das',    blood_group:'AB+', distance:7.2, available:true,  response_rate:0.89, score:-11.0, rank:1, lat:17.4150, lng:78.5167 },
+  { id:5,  name:'Neha Iyer',     blood_group:'O-',  distance:3.4, available:true,  response_rate:0.98, score:-15.1, rank:1, lat:17.4250, lng:78.5267 },
+  { id:6,  name:'Vikram Rao',    blood_group:'A-',  distance:5.6, available:false, response_rate:0.62, score:-7.1,  rank:1, lat:17.4350, lng:78.5367 },
+  { id:7,  name:'Zoya Khan',     blood_group:'B-',  distance:6.1, available:true,  response_rate:0.81, score:-9.4,  rank:1, lat:17.4450, lng:78.5467 },
+  { id:8,  name:'Ishaan Patel',  blood_group:'AB-', distance:8.7, available:true,  response_rate:0.77, score:-8.8,  rank:1, lat:17.4550, lng:78.5567 },
+  { id:9,  name:'Simran Gill',   blood_group:'O+',  distance:4.3, available:true,  response_rate:0.92, score:-11.8, rank:2, lat:17.4650, lng:78.5667 },
+  { id:10, name:'Dev Joshi',     blood_group:'A+',  distance:9.5, available:true,  response_rate:0.76, score:-8.1,  rank:2, lat:17.4750, lng:78.5767 },
+  { id:11, name:'Mira Thomas',   blood_group:'O-',  distance:6.8, available:true,  response_rate:0.95, score:-12.2, rank:2, lat:17.4850, lng:78.5867 },
+  { id:12, name:'Arjun Kapoor',  blood_group:'B+',  distance:1.2, available:true,  response_rate:0.88, score:-13.1, rank:2, lat:17.4950, lng:78.5967 }
 ];
 
 const HYDERABAD_AREAS = [
@@ -234,10 +237,14 @@ async function checkAPI() {
 }
 
 async function apiMatchDonors(bg) {
+  const body = { blood_group: bg };
+  if (userLocation) {
+    body.userLocation = `${userLocation.lat},${userLocation.lng}`;
+  }
   const res = await fetch(`${BASE_URL}/match-donors`, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({blood_group:bg})
+    body:JSON.stringify(body)
   });
   return res.json();
 }
@@ -265,6 +272,15 @@ async function apiNotify(donors) {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function apiSendSOS(message) {
+  const res = await fetch(`${BASE_URL}/sos`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ message })
   });
   return res.json();
 }
@@ -425,7 +441,8 @@ function renderDonorGrid(targetId, donors, withNotify = false) {
   donors.forEach(d => {
     const pct = Math.round(d.response_rate * 100);
     const ini = d.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-    const eta = Math.round((d.distance / 30) * 60);
+    const distanceValue = d.distance != null ? `${d.distance} km` : 'Unknown';
+    const etaValue = d.distance != null ? `~${Math.round((d.distance / 30) * 60)} min` : 'N/A';
     const card = document.createElement('div');
     card.className = 'dcard' + (d.rank === 1 ? ' top' : '');
     card.innerHTML = `
@@ -433,15 +450,15 @@ function renderDonorGrid(targetId, donors, withNotify = false) {
         <div class="d-av">${ini}</div>
         <div>
           <div class="d-name">${d.name}</div>
-          <div class="d-loc">${d.distance} km away · Rank #${d.rank}</div>
+          <div class="d-loc">${distanceValue} · Rank #${d.rank}</div>
         </div>
         <div class="d-bg">${d.blood_group}</div>
       </div>
       <span class="avail ${d.available ? 'yes' : 'no'}">${d.available ? 'Available Now' : 'Unavailable'}</span>
       <div class="d-stats">
-        <div class="dst"><div class="dst-l">Distance</div><div class="dst-v">${d.distance} km</div></div>
+        <div class="dst"><div class="dst-l">Distance</div><div class="dst-v">${distanceValue}</div></div>
         <div class="dst"><div class="dst-l">Response</div><div class="dst-v">${pct}%</div></div>
-        <div class="dst"><div class="dst-l">ETA est.</div><div class="dst-v">~${eta} min</div></div>
+        <div class="dst"><div class="dst-l">ETA est.</div><div class="dst-v">${etaValue}</div></div>
       </div>
       <div class="pb"><div class="pf" style="width:${pct}%"></div></div>
       <div style="font-size:.67rem;color:var(--muted);margin-bottom:${withNotify?'0':'8px'}">Response probability</div>
@@ -578,6 +595,16 @@ async function triggerSOS() {
     }
 
     const now = new Date().toLocaleTimeString();
+    const sosMessage = `SOS: ${bg} blood urgently required near ${userLocation ? 'live user location' : loc}. Top donor: ${top ? top.name : 'No donor available yet'}.`;
+    let smsLine = `[${now}] Emergency SMS broadcast initiated`;
+    try {
+      const sosResponse = await apiSendSOS(sosMessage);
+      smsLine = sosResponse.success
+        ? `[${now}] Emergency SMS sent successfully`
+        : `[${now}] Emergency SMS failed`;
+    } catch {
+      smsLine = `[${now}] Emergency SMS unavailable`;
+    }
     document.getElementById('sosLog').innerHTML = [
       `[${now}] 🔴 SOS ACTIVATED — Group: ${bg} — Location: ${userLocation ? 'Live GPS' : loc}`,
       top ? `[${now}] 📡 Alerts sent to ${Math.min(donors.length,3)} top donors` : `[${now}] ⚠️ No nearby donors — escalating to blood banks`,
@@ -599,36 +626,31 @@ async function triggerSOS() {
 async function loadAllDonors() {
   try {
     const data = await apiGetAllDonors();
-    if (data.success && Array.isArray(data.donors) && data.donors.length) {
+    if (data.success && Array.isArray(data.donors)) {
       allDonors = data.donors;
     } else {
-      allDonors = BASE_DONORS;
+      allDonors = [];
     }
   } catch {
-    allDonors = BASE_DONORS;
+    allDonors = [];
   }
+  updateDonorDistances();
   renderAllDonors();
+  updateStats();
 }
 
 function renderAllDonors() {
-  const source = allDonors.length ? allDonors : BASE_DONORS;
-  const all  = [...source, ...communityDonors.map((d,i) => ({
-    id: 100+i, name:d.name, blood_group:d.bloodGroup, distance:d.distance||Math.round(Math.random()*5+1),
-    available:d.available, response_rate:d.rate||0.82, score:-9, rank:1
-  }))];
-  renderDonorGrid('allDonorGrid', all);
-  renderDonorGrid('availGrid', all.filter(d => d.available === true || d.available === 'true'));
-  document.getElementById('donorCnt').textContent = `${all.length} donors`;
+  const source = allDonors;
+  renderDonorGrid('allDonorGrid', source);
+  renderDonorGrid('availGrid', source.filter(d => d.available === true || d.available === 'true'));
+  document.getElementById('donorCnt').textContent = `${source.length} donors`;
+  updateStats(source.length);
 }
 
 function filterDonors() {
   const q    = document.getElementById('donorFilter').value.toLowerCase();
   const bgf  = document.getElementById('donorBGF').value;
-  const source = allDonors.length ? allDonors : BASE_DONORS;
-  const all  = [...source, ...communityDonors.map((d,i) => ({
-    id:100+i, name:d.name, blood_group:d.bloodGroup, distance:d.distance||3,
-    available:d.available, response_rate:0.82, score:-9, rank:1
-  }))];
+  const all = allDonors;
   const filt = all.filter(d =>
     (!q   || d.name.toLowerCase().includes(q) || d.blood_group.toLowerCase().includes(q)) &&
     (!bgf || d.blood_group === bgf)
@@ -640,24 +662,29 @@ function filterDonors() {
 
 // ── REGISTER ──────────────────────────────────────────────────────────────────
 async function registerDonor() {
-  const name  = document.getElementById('rName').value.trim();
-  const bg    = document.getElementById('rBG').value;
-  const loc   = document.getElementById('rLoc').value.trim();
-  const phone = document.getElementById('rPhone').value.trim();
+  const name      = document.getElementById('rName').value.trim();
+  const bg        = document.getElementById('rBG').value;
+  const phone     = document.getElementById('rPhone').value.trim();
   const fileInput = document.getElementById('rFile');
-  
-  if (!name || !bg || !loc || !phone) { toast('Fill all required fields (*)', 'w'); return; }
+
+  if (!name || !bg || !phone) { toast('Fill all required fields (*)', 'w'); return; }
+  if (!selectedDonorLocation) {
+    setLocationError('Please select a donor location before submitting.');
+    toast('Select a location for the donor', 'w');
+    return;
+  }
   if (!fileInput.files || fileInput.files.length === 0) { toast('Medical document is required', 'e'); return; }
 
   const donor = {
     name,
     blood_group: bg,
-    location: loc,
     phone,
     lastDonation: document.getElementById('rLast').value || 'First time',
     available: document.getElementById('rAvail').value === 'true',
-    distance: estimateDonorDistance(loc),
-    response_rate: +(Math.random() * 0.2 + 0.75).toFixed(2)
+    response_rate: +(Math.random() * 0.2 + 0.75).toFixed(2),
+    location: selectedDonorLocation,
+    lat: selectedDonorLocation.latitude,
+    lng: selectedDonorLocation.longitude
   };
 
   let savedToBackend = false;
@@ -671,17 +698,20 @@ async function registerDonor() {
     console.warn('Backend add donor failed', error);
   }
 
-  // keep community donors locally for UI and filtering
-  communityDonors.push({
+  const communityDonor = {
     name,
     bloodGroup: bg,
-    location: loc,
     phone,
     lastDonation: donor.lastDonation,
     available: donor.available,
-    distance: donor.distance,
-    rate: donor.response_rate
-  });
+    distance: null,
+    rate: donor.response_rate,
+    location: selectedDonorLocation,
+    lat: selectedDonorLocation.latitude,
+    lng: selectedDonorLocation.longitude
+  };
+
+  communityDonors.push(communityDonor);
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(communityDonors)); } catch {}
 
   if (savedToBackend) {
@@ -694,7 +724,13 @@ async function registerDonor() {
 
   renderCommunityDonors();
   updateStats();
-  ['rName','rBG','rLoc','rPhone','rLast'].forEach(id => document.getElementById(id).value = '');
+  ['rName','rBG','rPhone','rLast','rAddressSearch'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  selectedDonorLocation = null;
+  donorLocationMode = 'gps';
+  updateDonorLocationSelectorUI();
   clearFileUpload();
 }
 
@@ -740,12 +776,8 @@ function handleFileUpload(input) {
 
     document.getElementById('rFile').dataset.uploaded = 'true';
     toast('File uploaded successfully', 's');
-
-    // Add this inside handleFileUpload, after the toast line:
-    if (file.type !== 'application/pdf') {
-      const base64Data = e.target.result.split(',')[1];
-      verifyMedicalDocument(base64Data, file.type, file.name);
-    }
+    const verifyResult = document.getElementById('docVerifyResult');
+    if (verifyResult) verifyResult.style.display = 'none';
   };
 
   reader.readAsDataURL(file);
@@ -983,6 +1015,59 @@ function updateHospitalETAs() {
       h.eta = `${etaMinutes} min`;
     } catch (error) {
       console.warn('Error calculating hospital ETA:', error);
+    }
+  }
+}
+
+function getDonorCoordinates(donor) {
+  if (!donor) return null;
+  if (donor.lat !== undefined && donor.lng !== undefined) {
+    return { lat: donor.lat, lng: donor.lng };
+  }
+  if (donor.location && typeof donor.location === 'object' && donor.location.latitude !== undefined && donor.location.longitude !== undefined) {
+    return { lat: donor.location.latitude, lng: donor.location.longitude };
+  }
+  return null;
+}
+
+function updateDonorDistances() {
+  const allDonorArrays = [BASE_DONORS, communityDonors, allDonors];
+  for (let donorArray of allDonorArrays) {
+    if (Array.isArray(donorArray)) {
+      for (let d of donorArray) {
+        const coords = getDonorCoordinates(d);
+        if (userLocation && coords) {
+          try {
+            d.distance = Number(getDistanceFromLatLonInKm(
+              userLocation.lat, userLocation.lng,
+              coords.lat, coords.lng
+            ).toFixed(1));
+          } catch (error) {
+            console.warn('Error calculating donor distance:', error);
+            d.distance = null;
+          }
+        } else {
+          d.distance = null;
+        }
+      }
+    }
+  }
+}
+
+function updateBloodBankETAs() {
+  if (!userLocation) return;
+  
+  for (let b of BLOOD_BANKS) {
+    try {
+      const distance = getDistanceFromLatLonInKm(
+        userLocation.lat, userLocation.lng,
+        b.lat, b.lng
+      );
+      const etaMinutes = Math.round((distance / 30) * 60);
+      b.distance = Number(distance.toFixed(1));
+      b.eta = `${etaMinutes} min`;
+    } catch (error) {
+      console.warn('Error calculating blood bank ETA:', error);
     }
   }
 }
@@ -1232,87 +1317,216 @@ Use **bold** for key terms. Under 90 words.`
 
 // ── LOCATION DROPDOWN ──────────────────────────────────────────────────────────
 function initLocationDropdown() {
-  const input = document.getElementById('rLoc');
+  const searchInput = document.getElementById('rAddressSearch');
   const dropdown = document.getElementById('locationDropdown');
 
-  // Show dropdown on click
-  input.addEventListener('click', () => {
-    const query = input.value.toLowerCase().trim();
-    if (query.length >= 1) {
-      const matches = HYDERABAD_AREAS.filter(area =>
-        area.toLowerCase().startsWith(query)
-      ).slice(0, 8);
-      if (matches.length > 0) {
-        dropdown.innerHTML = matches.map(area =>
-          `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
-        ).join('');
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    clearLocationError();
+    selectedDonorLocation = null;
+    updateDonorLocationSelectorUI();
+
+    if (query.length < 2) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    if (locationSearchTimer) clearTimeout(locationSearchTimer);
+    locationSearchTimer = setTimeout(async () => {
+      const suggestions = await fetchLocationSuggestions(query);
+      locationSuggestions = suggestions;
+      populateLocationDropdown(suggestions);
+      dropdown.style.display = suggestions.length ? 'block' : 'none';
+    }, 300);
+  });
+
+  searchInput.addEventListener('focus', () => {
+    const query = searchInput.value.trim();
+    if (query.length >= 2) {
+      if (locationSuggestions.length > 0) {
+        populateLocationDropdown(locationSuggestions);
         dropdown.style.display = 'block';
       }
-    } else {
-      // Show all locations when clicked and empty
-      const allMatches = HYDERABAD_AREAS.slice(0, 8);
-      dropdown.innerHTML = allMatches.map(area =>
-        `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
-      ).join('');
-      dropdown.style.display = 'block';
     }
   });
 
-  input.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    if (query.length < 1) {
-      dropdown.style.display = 'none';
-      return;
-    }
-
-    const matches = HYDERABAD_AREAS.filter(area =>
-      area.toLowerCase().startsWith(query)
-    ).slice(0, 8); // Limit to 8 results
-
-    if (matches.length === 0) {
-      dropdown.style.display = 'none';
-      return;
-    }
-
-    dropdown.innerHTML = matches.map(area =>
-      `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
-    ).join('');
-    dropdown.style.display = 'block';
-  });
-
-  input.addEventListener('blur', () => {
-    // Delay hiding to allow click on dropdown items
+  searchInput.addEventListener('blur', () => {
     setTimeout(() => {
       dropdown.style.display = 'none';
     }, 150);
   });
 
-  input.addEventListener('focus', () => {
-    const query = input.value.toLowerCase().trim();
-    if (query.length >= 1) {
-      const matches = HYDERABAD_AREAS.filter(area =>
-        area.toLowerCase().startsWith(query)
-      ).slice(0, 8);
-      if (matches.length > 0) {
-        dropdown.innerHTML = matches.map(area =>
-          `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
-        ).join('');
-        dropdown.style.display = 'block';
-      }
-    } else {
-      // Show all locations when input is focused but empty
-      const allMatches = HYDERABAD_AREAS.slice(0, 8);
-      dropdown.innerHTML = allMatches.map(area =>
-        `<div class="dropdown-item" onclick="selectLocation('${area}')">${area}</div>`
-      ).join('');
-      dropdown.style.display = 'block';
-    }
-  });
+  selectDonorLocationMode(donorLocationMode);
 }
 
-function selectLocation(area) {
-  document.getElementById('rLoc').value = area;
+function selectDonorLocationMode(mode) {
+  donorLocationMode = mode;
+  clearLocationError();
+  selectedDonorLocation = null;
+  updateDonorLocationSelectorUI();
+
+  if (mode === 'gps') {
+    const gpsLabel = document.getElementById('locationHelp');
+    gpsLabel.textContent = 'Attempting to capture current GPS coordinates…';
+
+    if (userLocation) {
+      selectedDonorLocation = {
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        address: 'Current GPS coordinates'
+      };
+      reverseGeocodeLocation(userLocation.lat, userLocation.lng);
+      updateDonorLocationSelectorUI();
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by this browser. Use address search.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        userLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        selectedDonorLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          address: 'Current GPS coordinates'
+        };
+        await reverseGeocodeLocation(position.coords.latitude, position.coords.longitude);
+        updateDonorLocationSelectorUI();
+      },
+      (error) => {
+        setLocationError(`GPS failed: ${error.message}. Use search instead.`);
+        document.getElementById('locationHelp').textContent = 'GPS permission denied or unavailable.';
+        donorLocationMode = 'search';
+        updateDonorLocationSelectorUI();
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  }
+}
+
+function updateDonorLocationSelectorUI() {
+  const gpsButton = document.getElementById('locModeGps');
+  const searchButton = document.getElementById('locModeSearch');
+  const searchInput = document.getElementById('rAddressSearch');
+  const help = document.getElementById('locationHelp');
+
+  if (donorLocationMode === 'gps') {
+    gpsButton.classList.add('active');
+    searchButton.classList.remove('active');
+    searchInput.style.display = 'none';
+    if (selectedDonorLocation) {
+      help.textContent = 'GPS coordinates captured successfully.';
+    } else {
+      help.textContent = 'Click "Use Current Location" to capture GPS coordinates.';
+    }
+  } else {
+    gpsButton.classList.remove('active');
+    searchButton.classList.add('active');
+    searchInput.style.display = 'block';
+    if (selectedDonorLocation) {
+      help.textContent = 'Location selected and stored as coordinates.';
+    } else {
+      help.textContent = 'Search for an address and choose from the list.';
+    }
+  }
+}
+
+async function fetchLocationSuggestions(query) {
+  const key = query.trim().toLowerCase();
+  if (locationSearchCache[key]) return locationSearchCache[key];
+
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&q=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error('Location search service unavailable');
+    }
+    const results = await response.json();
+    const suggestions = Array.isArray(results) ? results.map(item => ({
+      latitude: Number(item.lat),
+      longitude: Number(item.lon),
+      address: item.display_name || item.name || query
+    })) : [];
+    locationSearchCache[key] = suggestions;
+    return suggestions;
+  } catch (error) {
+    setLocationError('Address search failed. Try again or use GPS.');
+    return [];
+  }
+}
+
+function populateLocationDropdown(results) {
+  const dropdown = document.getElementById('locationDropdown');
+  if (!dropdown) return;
+
+  if (!results.length) {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  dropdown.innerHTML = results.map((item, index) =>
+    `<div class="dropdown-item" onclick="selectLocation(${index})">${item.address}</div>`
+  ).join('');
+}
+
+function selectLocation(index) {
+  const selected = locationSuggestions[index];
+  if (!selected) return;
+
+  selectedDonorLocation = {
+    latitude: selected.latitude,
+    longitude: selected.longitude,
+    address: selected.address
+  };
+  document.getElementById('rAddressSearch').value = selected.address;
   document.getElementById('locationDropdown').style.display = 'none';
+  clearLocationError();
+  updateDonorLocationSelectorUI();
+}
+
+function setLocationError(message) {
+  const errorEl = document.getElementById('locationError');
+  if (errorEl) {
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  }
+}
+
+function clearLocationError() {
+  const errorEl = document.getElementById('locationError');
+  if (errorEl) {
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+  }
+}
+
+async function reverseGeocodeLocation(lat, lng) {
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data.display_name) {
+      selectedDonorLocation = {
+        latitude: lat,
+        longitude: lng,
+        address: data.display_name
+      };
+      updateDonorLocationSelectorUI();
+      return data.display_name;
+    }
+  } catch (err) {
+    console.warn('Reverse geocode failed:', err.message);
+  }
+  return null;
 }
 
 function initSearchLocationDropdown() {
@@ -1434,8 +1648,10 @@ function renderActivityFeed() {
 }
 
 // ── STATS ─────────────────────────────────────────────────────────────────────
-function updateStats() {
-  const total = allDonors.length ? allDonors.length : BASE_DONORS.length;
+function updateStats(total = null) {
+  if (total == null) {
+    total = allDonors.length;
+  }
   ['hStatDonors','scDonors'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = total;

@@ -355,13 +355,25 @@
             <div class="reg-grid">
               <div class="fg"><label class="fl">Full Name *</label><input class="fi" id="rName" placeholder="Enter full name"></div>
               <div class="fg"><label class="fl">Blood Group *</label><div class="sw"><select class="fi" id="rBG"><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div></div>
-              <div class="fg"><label class="fl">Location / Area *</label><input class="fi" id="rLoc" placeholder="e.g. Gachibowli"><div class="dropdown" id="locationDropdown"></div></div>
+              <div class="fg" style="grid-column:1/-1">
+                <label class="fl">Location *</label>
+                <div class="chip-row" style="gap:8px;flex-wrap:wrap" id="locationModeRow">
+                  <button type="button" class="chip active" id="locModeGps" onclick="selectDonorLocationMode('gps')">📍 Use Current Location</button>
+                  <button type="button" class="chip" id="locModeSearch" onclick="selectDonorLocationMode('search')">🔍 Search Address</button>
+                </div>
+                <div class="fi" id="locationHelp" style="margin-top:8px;background:var(--soft);color:var(--muted)">Choose a location method to capture coordinates.</div>
+              </div>
+              <div class="fg" style="grid-column:1/-1">
+                <input class="fi" id="rAddressSearch" placeholder="Search address or area" autocomplete="off" style="display:none">
+                <div class="dropdown" id="locationDropdown"></div>
+                <div id="locationError" style="margin-top:8px;color:var(--red);font-size:.85rem;display:none"></div>
+              </div>
               <div class="fg"><label class="fl">Phone Number *</label><input class="fi" id="rPhone" placeholder="10-digit number" type="tel"></div>
               <div class="fg"><label class="fl">Last Donation</label><input class="fi" id="rLast" placeholder="e.g. 3 months ago"></div>
               <div class="fg"><label class="fl">Availability*</label><div class="sw"><select class="fi" id="rAvail"><option value="true">Available Now</option><option value="false">Unavailable</option></select></div></div>
               <div class="fg"><label class="fl">Age</label><input class="fi" id="rAge" placeholder="e.g. 28" type="number" min="18" max="65"></div>
               <div class="fg"><label class="fl">Weight (kg)</label><input class="fi" id="rWeight" placeholder="Min 50 kg" type="number" min="50"></div>
-              <div class="fg"><label class="fl">Medical Document *</label>
+              <div class="fg" style="grid-column:2/3"><label class="fl">Medical Document *</label>
                 <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('rFile').click()">
                   <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 8px;opacity:0.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                   <p style="margin:0;font-size:0.85rem;color:var(--muted)">Click to upload PDF, JPEG, or JPG</p>
