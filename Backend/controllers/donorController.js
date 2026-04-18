@@ -4,12 +4,36 @@ const donorsPath = path.join(__dirname, "../data/donors.json");
 const donors = require("../data/donors.json");
 const { findMatchingDonors } = require("../services/matchingService");
 const { calculateETA } = require("../utils/eta");
+const { geocodeAddress, ensureDonorsLocations, normalizeDonorOutput } = require("../services/geocodingService");
 
-const getAllDonors = (req, res) => {
+// Helper function to calculate distance between two lat/lng points
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+const getAllDonors = async (req, res) => {
   try {
+    const updated = await ensureDonorsLocations(donors);
+    if (updated) {
+      fs.writeFileSync(donorsPath, JSON.stringify(donors, null, 2), "utf-8");
+    }
+
     res.json({
       success: true,
-      donors
+      donors: donors.map(normalizeDonorOutput)
     });
   } catch (error) {
     console.log(error);
@@ -58,23 +82,24 @@ const previewETA = async (req, res) => {
   }
 };
 
-const addDonor = (req, res) => {
+const addDonor = async (req, res) => {
   try {
     const {
       name,
       blood_group,
       location,
+      lat,
+      lng,
       phone,
       lastDonation,
       available,
-      distance,
       response_rate
     } = req.body;
 
-    if (!name || !blood_group || !location || !phone) {
+    if (!name || !blood_group || !phone || (!location && lat === undefined && lng === undefined)) {
       return res.json({
         success: false,
-        message: "Name, blood group, location, and phone are required"
+        message: "Name, blood group, phone, and either location or lat/lng are required"
       });
     }
 
@@ -83,20 +108,43 @@ const addDonor = (req, res) => {
       id: nextId,
       name,
       blood_group,
-      location,
       phone,
       lastDonation: lastDonation || "First time",
       available: available === undefined ? true : Boolean(available),
-      distance: typeof distance === 'number' ? distance : +(Math.random() * 5 + 1).toFixed(1),
-      response_rate: typeof response_rate === 'number' ? response_rate : +(Math.random() * 0.2 + 0.75).toFixed(2)
+      response_rate: typeof response_rate === 'number' ? response_rate : +(Math.random() * 0.2 + 0.75).toFixed(2),
+      lastUpdated: new Date().toISOString()
     };
+
+    if (location && typeof location === 'object' && location.latitude !== undefined && location.longitude !== undefined) {
+      newDonor.lat = Number(location.latitude);
+      newDonor.lng = Number(location.longitude);
+      newDonor.location = {
+        latitude: newDonor.lat,
+        longitude: newDonor.lng,
+        address: location.address || location.displayName || null
+      };
+    } else if (lat !== undefined && lng !== undefined) {
+      newDonor.lat = Number(lat);
+      newDonor.lng = Number(lng);
+      newDonor.location = { latitude: newDonor.lat, longitude: newDonor.lng };
+    }
+
+    if (location && typeof location === 'string') {
+      newDonor.location = location.trim();
+      const geocoded = await geocodeAddress(newDonor.location);
+      if (geocoded) {
+        newDonor.lat = geocoded.latitude;
+        newDonor.lng = geocoded.longitude;
+        newDonor.location = { latitude: geocoded.latitude, longitude: geocoded.longitude };
+      }
+    }
 
     donors.push(newDonor);
     fs.writeFileSync(donorsPath, JSON.stringify(donors, null, 2), "utf-8");
 
     res.json({
       success: true,
-      donor: newDonor
+      donor: normalizeDonorOutput(newDonor)
     });
   } catch (error) {
     console.log(error);
@@ -111,6 +159,7 @@ const addDonor = (req, res) => {
 const getDonors = (req, res) => {
   try {
     const blood_group = req.body?.blood_group;
+    const userLocationStr = req.body?.userLocation;
 
     if (!blood_group) {
       return res.json({
@@ -119,7 +168,7 @@ const getDonors = (req, res) => {
       });
     }
 
-    const result = findMatchingDonors(blood_group);
+    const result = findMatchingDonors(blood_group, userLocationStr);
 
     if (!result.success) {
       return res.json(result);
