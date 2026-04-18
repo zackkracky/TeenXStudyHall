@@ -23,7 +23,8 @@ app.get("/api", (req, res) => {
     endpoints: {
       "GET /api/donors": "Return the full donor list from donors.json",
       "POST /api/match-donors": "Find matching donors by blood group",
-      "POST /api/notify": "Notify selected donors"
+      "POST /api/notify": "Notify selected donors",
+      "POST /api/sos": "Send emergency SMS alert"
     }
   });
 });

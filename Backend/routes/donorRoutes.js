@@ -9,6 +9,6 @@ router.get("/eta-preview", previewETA);
 router.post("/donors", addDonor);
 router.post("/match-donors", getDonors);
 router.post("/notify", notifyDonors);
+router.post("/sos", sendSOS);
 
 module.exports = router;
-router.post("/sos", sendSOS);

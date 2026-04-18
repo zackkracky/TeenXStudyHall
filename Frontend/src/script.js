@@ -269,6 +269,15 @@ async function apiNotify(donors) {
   return res.json();
 }
 
+async function apiSOS(message) {
+  const res = await fetch(`${BASE_URL}/sos`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ message })
+  });
+  return res.json();
+}
+
 function demoDonors(bg) {
   const compatible = Object.keys(COMPAT).filter(g => COMPAT[bg] && COMPAT[bg].r.includes(g));
   return BASE_DONORS
@@ -556,6 +565,16 @@ async function triggerSOS() {
   sosActive = !sosActive;
 
   if (sosActive) {
+    // Send SMS alert
+    try {
+      const smsMessage = `🚨 URGENT BLOOD EMERGENCY! Blood group ${bg} needed immediately at ${userLocation ? 'current location' : loc}. Please respond if you can help save a life!`;
+      await apiSOS(smsMessage);
+      console.log('SOS SMS sent successfully');
+    } catch (error) {
+      console.error('Failed to send SOS SMS:', error);
+      toast('SOS activated but SMS failed to send', 'w');
+    }
+
     btn.textContent = '🔴 BROADCAST ACTIVE — CLICK TO CANCEL';
     btn.classList.add('live');
     document.getElementById('sosStat').textContent = `ACTIVE — ${bg} emergency near ${userLocation ? 'your location' : loc}`;
