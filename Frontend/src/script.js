@@ -5,11 +5,12 @@
 'use strict';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const BASE_URL = 'http://localhost:5001/api';
+const BASE_URL = `${window.location.protocol}//${window.location.hostname || 'localhost'}:5501/api`;
 
 async function callGemini(prompt, base64Image = null, mimeType = 'image/jpeg') {
   throw new Error('AI features are disabled in the browser until a server-side key is configured.');
 }
+
 
 function formatGeminiReply(text) {
   return text
@@ -188,7 +189,6 @@ let allDonors = [];
 let lastSearchDonors = [];
 let sosActive = false;
 let currentUrgency = 'critical';
-let mapStockFilter = 'all';
 
 try { communityDonors = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch {}
 
@@ -211,10 +211,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initLocationDropdown();
   initSearchLocationDropdown();
   initFileUploadDragDrop();
-  // Tab switching (delegated)
-  document.querySelectorAll('[data-group]').forEach(strip => {
-    // handled per page via switchTab
-  });
 });
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -438,11 +434,12 @@ function renderDonorGrid(targetId, donors, withNotify = false) {
     return;
   }
   el.innerHTML = '';
-  donors.forEach(d => {
+  donors.map((donor, index) => normalizeDonorRecord(donor, index)).forEach(d => {
     const pct = Math.round(d.response_rate * 100);
     const ini = d.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
     const distanceValue = d.distance != null ? `${d.distance} km` : 'Unknown';
     const etaValue = d.distance != null ? `~${Math.round((d.distance / 30) * 60)} min` : 'N/A';
+    const metaLine = [d.display_location, d.rank != null ? `Rank #${d.rank}` : null].filter(Boolean).join(' · ');
     const card = document.createElement('div');
     card.className = 'dcard' + (d.rank === 1 ? ' top' : '');
     card.innerHTML = `
@@ -466,8 +463,42 @@ function renderDonorGrid(targetId, donors, withNotify = false) {
         ${d.available ? '📱 Notify Donor' : '❌ Unavailable'}
       </button>` : ''}
     `;
+    const locationLine = card.querySelector('.d-loc');
+    if (locationLine) locationLine.textContent = metaLine || distanceValue;
     el.appendChild(card);
   });
+}
+
+function getDonorDisplayLocation(donor) {
+  if (!donor) return 'Location unavailable';
+  if (typeof donor.location === 'string' && donor.location.trim()) {
+    return donor.location.trim();
+  }
+  if (donor.location && typeof donor.location === 'object') {
+    if (typeof donor.location.address === 'string' && donor.location.address.trim()) {
+      return donor.location.address.trim();
+    }
+    if (donor.location.latitude != null && donor.location.longitude != null) {
+      return `${Number(donor.location.latitude).toFixed(4)}, ${Number(donor.location.longitude).toFixed(4)}`;
+    }
+  }
+  if (donor.lat != null && donor.lng != null) {
+    return `${Number(donor.lat).toFixed(4)}, ${Number(donor.lng).toFixed(4)}`;
+  }
+  return 'Location unavailable';
+}
+
+function normalizeDonorRecord(donor, index = 0) {
+  return {
+    ...donor,
+    id: donor.id ?? `local-${index}`,
+    name: donor.name || 'Unknown Donor',
+    blood_group: donor.blood_group || donor.bloodGroup || 'Unknown',
+    response_rate: Number(donor.response_rate ?? donor.rate ?? 0),
+    available: donor.available === true || donor.available === 'true',
+    rank: donor.rank ?? (index + 1),
+    display_location: getDonorDisplayLocation(donor)
+  };
 }
 
 async function notifyOne(btn, donorId) {
@@ -596,24 +627,16 @@ async function triggerSOS() {
     const top = donors[0];
     if (top) {
       // Try to get real ETA
-      let eta = Math.round((top.distance / 30) * 60);
-      try {
-        const etaData = await apiGetAllDonors(); // Wait, better to call eta-preview
-        // Actually, call a new function for ETA
-      } catch {}
+      const eta = Math.round((top.distance / 30) * 60);
       document.getElementById('sosTopD').textContent = `${top.name} · ${top.distance} km · ETA ~${eta} min`;
     }
 
     const now = new Date().toLocaleTimeString();
     const sosMessage = `SOS: ${bg} blood urgently required near ${userLocation ? 'live user location' : loc}. Top donor: ${top ? top.name : 'No donor available yet'}.`;
-    let smsLine = `[${now}] Emergency SMS broadcast initiated`;
     try {
-      const sosResponse = await apiSendSOS(sosMessage);
-      smsLine = sosResponse.success
-        ? `[${now}] Emergency SMS sent successfully`
-        : `[${now}] Emergency SMS failed`;
+      await apiSendSOS(sosMessage);
     } catch {
-      smsLine = `[${now}] Emergency SMS unavailable`;
+      // Keep the SOS flow usable even when the SMS backend is unavailable.
     }
     document.getElementById('sosLog').innerHTML = [
       `[${now}] 🔴 SOS ACTIVATED — Group: ${bg} — Location: ${userLocation ? 'Live GPS' : loc}`,
@@ -637,7 +660,7 @@ async function loadAllDonors() {
   try {
     const data = await apiGetAllDonors();
     if (data.success && Array.isArray(data.donors)) {
-      allDonors = data.donors;
+      allDonors = data.donors.map((donor, index) => normalizeDonorRecord(donor, index));
     } else {
       allDonors = [];
     }
@@ -650,7 +673,7 @@ async function loadAllDonors() {
 }
 
 function renderAllDonors() {
-  const source = allDonors;
+  const source = allDonors.map((donor, index) => normalizeDonorRecord(donor, index));
   renderDonorGrid('allDonorGrid', source);
   renderDonorGrid('availGrid', source.filter(d => d.available === true || d.available === 'true'));
   document.getElementById('donorCnt').textContent = `${source.length} donors`;
@@ -660,9 +683,9 @@ function renderAllDonors() {
 function filterDonors() {
   const q    = document.getElementById('donorFilter').value.toLowerCase();
   const bgf  = document.getElementById('donorBGF').value;
-  const all = allDonors;
+  const all = allDonors.map((donor, index) => normalizeDonorRecord(donor, index));
   const filt = all.filter(d =>
-    (!q   || d.name.toLowerCase().includes(q) || d.blood_group.toLowerCase().includes(q)) &&
+    (!q   || d.name.toLowerCase().includes(q) || d.blood_group.toLowerCase().includes(q) || d.display_location.toLowerCase().includes(q)) &&
     (!bgf || d.blood_group === bgf)
   );
   renderDonorGrid('allDonorGrid', filt);
@@ -841,46 +864,6 @@ function initFileUploadDragDrop() {
     document.getElementById('rFile').files = files;
     handleFileUpload(document.getElementById('rFile'));
   }
-}
-
-function estimateDonorDistance(loc) {
-  if (!loc || typeof loc !== 'string') return 4.5;
-  const normalized = loc.trim().toLowerCase();
-  const distanceMap = {
-    'jubilee hills': 5.8,
-    'jubilee hill': 5.8,
-    'jubilee hills, hyderabad': 5.8,
-    'gachibowli': 11.2,
-    'hitech city': 12.0,
-    'hyderabad': 5.0,
-    'banjara hills': 4.6,
-    'mehdipatnam': 6.8,
-    'kondapur': 9.4,
-    'secunderabad': 10.5,
-    'ameerpet': 8.0,
-    'malkajgiri': 11.5,
-    'malakpet': 7.9,
-    'miyapur': 13.4,
-    'sainikpuri': 15.2,
-    'kompally': 14.8,
-    'l.b. nagar': 9.3,
-    'amberpet': 8.7,
-    'pet basheerabad': 13.0
-  };
-
-  for (const [key, value] of Object.entries(distanceMap)) {
-    if (normalized.includes(key)) {
-      return value;
-    }
-  }
-
-  // Try to parse numeric kilometers if user provided them by mistake.
-  const numeric = parseFloat(normalized);
-  if (Number.isFinite(numeric) && numeric > 0) {
-    return Number(numeric.toFixed(1));
-  }
-
-  return 4.5;
 }
 
 function renderCommunityDonors() {
@@ -1179,7 +1162,6 @@ function filterMapList() {
 function filterMapStock(chip, level) {
   document.querySelectorAll('#page-map .chip').forEach(c => c.classList.remove('active'));
   chip.classList.add('active');
-  mapStockFilter = level;
   document.querySelectorAll('.map-hosp-item').forEach((el, i) => {
     const h = HOSPITALS[i];
     if (!h) return;
@@ -1720,28 +1702,13 @@ function sendChat() {
   document.getElementById('chatMessages').appendChild(typingEl);
   document.getElementById('chatMessages').scrollTop = 99999;
 
-  const systemPrompt = `You are WREN, the WLR Blood Network Emergency AI for Hyderabad, India.
-${HOSPITALS.length} hospitals, ${BLOOD_BANKS.length} blood banks, ${BASE_DONORS.length + communityDonors.length} donors in network.
-Hospitals: ${HOSPITALS.map(h=>`${h.name}(${h.area},${h.stock} stock)`).join(', ')}.
-Banks: ${BLOOD_BANKS.map(b=>`${b.name}(${b.stock})`).join(', ')}.
-O- = Universal Donor. AB+ = Universal Recipient. ETA=(distance/30)*60 min.
-Be concise, medically accurate, use **bold** for key terms. Under 120 words.
-
-User: ${msg}
-WREN:`;
-
-  callGemini(systemPrompt)
-    .then(reply => {
-      document.getElementById(typingId)?.remove();
-      addBubble('bot', formatGeminiReply(reply));
-      updateCharacterState('talking');
-    })
-    .catch(() => {
-      document.getElementById(typingId)?.remove();
-      addBubble('bot', getReply(msg)); // fallback to keyword replies
-      updateCharacterState('talking');
-    })
-    .finally(() => { inp.disabled = false; inp.focus(); });
+  setTimeout(() => {
+    document.getElementById(typingId)?.remove();
+    addBubble('bot', getReply(msg));
+    updateCharacterState('talking');
+    inp.disabled = false;
+    inp.focus();
+  }, 450);
 }
 
 function updateCharacterState(state) {
@@ -1807,7 +1774,7 @@ function getReply(msg) {
     return "⏱ <b>ETA & Response Times:</b><br><br>• <b>Calculation:</b> (Distance ÷ 30 km/h) × 60 minutes<br>• <b>Network Average:</b> ~9 minutes response time<br>• <b>Rank #1 Donors:</b> Highest response rates (85%+)<br>• <b>Factors:</b> Traffic, donor availability, response rate<br>• <b>Real-time:</b> ETAs update as donors confirm/decline<br><br><b>AI Optimization:</b> System prioritizes closest, most reliable donors.";
 
   if (t.includes('api') || t.includes('backend') || t.includes('endpoint') || t.includes('technical'))
-    return "🔌 <b>Technical Architecture:</b><br><br>• <b>Backend:</b> Node.js + Express on port 5001<br>• <b>API Endpoints:</b><br>&nbsp;&nbsp;• <code>POST /api/match-donors</code> - Find compatible donors<br>&nbsp;&nbsp;• <code>POST /api/notify</code> - Send notifications<br>&nbsp;&nbsp;• <code>GET /api/donors</code> - Get all donors<br>• <b>Data:</b> JSON file storage with real-time updates<br>• <b>Status:</b> Check sidebar indicator for connection<br><br><b>Demo Mode:</b> Works offline with sample data.";
+    return "🔌 <b>Technical Architecture:</b><br><br>• <b>Backend:</b> Node.js + Express on port 5501<br>• <b>API Endpoints:</b><br>&nbsp;&nbsp;• <code>POST /api/match-donors</code> - Find compatible donors<br>&nbsp;&nbsp;• <code>POST /api/notify</code> - Send notifications<br>&nbsp;&nbsp;• <code>GET /api/donors</code> - Get all donors<br>• <b>Data:</b> JSON file storage with real-time updates<br>• <b>Status:</b> Check sidebar indicator for connection<br><br><b>Demo Mode:</b> Works offline with sample data.";
 
   if (t.includes('available') || t.includes('now') || t.includes('current'))
     return "✅ <b>Available Donors:</b><br><br>• <b>All Donors → Available Now</b> tab shows only active donors<br>• Availability status set during registration<br>• Real-time updates as donors change status<br>• SOS alerts only go to available donors<br>• Community donors show registration status<br><br><b>Tip:</b> Check this tab for immediate blood needs.";
