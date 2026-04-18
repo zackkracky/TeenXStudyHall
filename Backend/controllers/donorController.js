@@ -3,6 +3,7 @@ const path = require("path");
 const donorsPath = path.join(__dirname, "../data/donors.json");
 const donors = require("../data/donors.json");
 const { findMatchingDonors } = require("../services/matchingService");
+const { calculateETA } = require("../utils/eta");
 
 const getAllDonors = (req, res) => {
   try {
@@ -15,6 +16,44 @@ const getAllDonors = (req, res) => {
     res.json({
       success: false,
       message: "Unable to load donors"
+    });
+  }
+};
+
+const previewETA = async (req, res) => {
+  try {
+    const donorId = req.query?.donorId ? Number(req.query.donorId) : undefined;
+    const userLocation = req.query?.userLocation || req.body?.userLocation;
+    let donor = req.body?.donor;
+
+    if (!donor && donorId) {
+      donor = donors.find((d) => d.id === donorId);
+    }
+
+    if (!donor) {
+      return res.json({
+        success: false,
+        message: "Donor ID or donor payload is required for ETA preview"
+      });
+    }
+
+    const etaMinutes = calculateETA(donor);
+    const eta = `${etaMinutes} mins`;
+    res.json({
+      success: true,
+      donor: {
+        id: donor.id,
+        name: donor.name,
+        blood_group: donor.blood_group
+      },
+      userLocation: userLocation || "Hyderabad, India",
+      eta
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: "Unable to compute ETA preview"
     });
   }
 };
@@ -102,7 +141,7 @@ const getDonors = (req, res) => {
 
 
 // NOTIFY DONORS
-const notifyDonors = (req, res) => {
+const notifyDonors = async (req, res) => {
   try {
     const { donors } = req.body;
 
@@ -113,13 +152,16 @@ const notifyDonors = (req, res) => {
       });
     }
 
-    const accepted = donors[0];
+        const accepted = donors[0];
+    const userLocation = req.body?.userLocation || "Hyderabad, India";
+    const etaMinutes = calculateETA(accepted);
+    const eta = `${etaMinutes} mins`;
 
     res.json({
       success: true,
       message: "Notification sent",
       accepted_by: accepted.name,
-      eta: "10 minutes"
+      eta
     });
 
   } catch (error) {
@@ -131,4 +173,4 @@ const notifyDonors = (req, res) => {
   }
 };
 
-module.exports = { getAllDonors, addDonor, getDonors, notifyDonors };
+module.exports = { getAllDonors, previewETA, addDonor, getDonors, notifyDonors };

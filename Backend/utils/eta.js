@@ -1,7 +1,15 @@
-const estimateETA = (distance) => {
-  const avgSpeed = 30; // km/h
-  const time = (distance / avgSpeed) * 60;
-  return `${Math.round(time)} mins`;
-};
+function calculateETA(donor) {
+  let eta = (donor.distance / 30) * 60;
 
-module.exports = { estimateETA };
+  if (!donor.available) {
+    eta += 7;
+  }
+
+  if (donor.response_rate < 0.7) {
+    eta += 3;
+  }
+
+  return Math.round(eta);
+}
+
+module.exports = { calculateETA };

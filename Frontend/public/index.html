@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../src/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
  
@@ -108,6 +109,10 @@
         <div class="topbar-sub" id="topSub">Real-time blood logistics monitoring</div>
       </div>
       <div class="topbar-right">
+        <div class="location-status" id="locationStatus">
+          <span id="locationIcon">📍</span>
+          <span id="locationText">Getting location...</span>
+        </div>
         <button class="btn-home-top" onclick="showPage('home')">
           <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           Home
@@ -422,7 +427,7 @@
         <div class="card"><div class="cb" style="text-align:center;padding:48px">
           <div style="font-size:3rem;margin-bottom:12px">🗺</div>
           <h3 style="margin-bottom:10px;font-family:'DM Serif Display',serif">Open Interactive Hospital Map</h3>
-          <p class="text-muted" style="margin-bottom:20px">See all Hyderabad hospitals with blood availability pinned on a live Google Map.</p>
+          <p class="text-muted" style="margin-bottom:20px">See all Hyderabad hospitals with blood availability pinned on a live OpenStreetMap map.</p>
           <button class="btn btn-red" onclick="showPage('map')">Open Hospital Map →</button>
         </div></div>
       </div>
@@ -457,16 +462,10 @@
         <!-- Map main -->
         <div class="map-main">
           <div class="map-frame-wrap">
-            <iframe
-              id="mapFrame"
-              title="Hyderabad Blood Bank & Hospital Map"
-              src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d121968.05895834254!2d78.3564993!3d17.3987946!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sblood+bank+hospital+hyderabad!5e0!3m2!1sen!2sin!4v1706000000000!5m2!1sen!2sin"
-              loading="lazy"
-              allowfullscreen
-              referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
+            <div id="map" style="height:500px;"></div>
             <!-- Quick-focus hospital buttons -->
             <div class="map-pill-row">
+              <button class="map-pill" onclick="centerMapOnUser()" style="background:#007bff">📍 My Location</button>
               <button class="map-pill" onclick="focusHosp('Apollo Hospitals Jubilee Hills Hyderabad')">Apollo</button>
               <button class="map-pill" onclick="focusHosp('AIG Hospitals Gachibowli Hyderabad')">AIG</button>
               <button class="map-pill" onclick="focusHosp('Yashoda Hospitals Secunderabad')">Yashoda</button>
@@ -537,6 +536,7 @@
 <div class="toast-wrap" id="toastWrap"></div>
  
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../src/script.js"></script>
 </body>
 

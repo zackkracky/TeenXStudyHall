@@ -225,6 +225,18 @@ body {
 .topbar-sub   { font-size: .75rem; color: var(--muted); margin-top: 1px; }
 .topbar-right { display: flex; gap: 8px; align-items: center; }
 
+.location-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .75rem;
+  color: var(--muted);
+  background: rgba(255,255,255,.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
 .btn-home-top {
   display: flex;
   align-items: center;
