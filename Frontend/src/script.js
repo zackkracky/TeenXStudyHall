@@ -6,6 +6,30 @@
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const BASE_URL = 'http://localhost:5001/api';
+const GEMINI_KEY = 'AIzaSyAT5Fa36fC96VN2NLQnqoYb09_31ZHDVwg'; // paste your new key
+
+async function callGemini(prompt, base64Image = null, mimeType = 'image/jpeg') {
+  const parts = [];
+  if (base64Image) parts.push({ inline_data: { mime_type: mimeType, data: base64Image } });
+  parts.push({ text: prompt });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+    { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{ parts }] }) }
+  );
+  if (!res.ok) { const err = await res.json().catch(()=>({})); throw new Error(err.error?.message || `HTTP ${res.status}`); }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+function formatGeminiReply(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:rgba(26,31,46,.07);padding:1px 5px;border-radius:4px;font-size:.82em">$1</code>')
+    .replace(/^\d+\.\s+(.+)$/gm, '<li style="margin-left:14px;margin-bottom:3px">$1</li>')
+    .replace(/^[-•]\s+(.+)$/gm, '<li style="margin-left:14px;margin-bottom:3px">$1</li>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
 // ── LOCATION ──────────────────────────────────────────────────────────────────
 let userLocation = null;
 let locationStatus = 'unknown'; // 'unknown', 'granted', 'denied', 'error'
@@ -13,10 +37,13 @@ let hospitalMap = null;
 let hospitalMarkers = [];
 let userMarker = null;
 const DEFAULT_MAP_CENTER = [17.3850, 78.4867];
+const HOSPITAL_LOCATION = { lat: 17.4275, lng: 78.4069 }; // Apollo Hospitals, Jubilee Hills
+let distanceToHospital = null;
 
 function getUserLocation() {
   if (!navigator.geolocation) {
     locationStatus = 'error';
+    distanceToHospital = null;
     updateLocationStatus('❌', 'Not supported');
     console.warn('Geolocation not supported');
     toast('Location not supported by browser', 'w');
@@ -29,9 +56,11 @@ function getUserLocation() {
         lat: position.coords.latitude,
         lng: position.coords.longitude
       };
+      distanceToHospital = getDistanceFromLatLonInKm(userLocation.lat, userLocation.lng, HOSPITAL_LOCATION.lat, HOSPITAL_LOCATION.lng);
       locationStatus = 'granted';
       updateLocationStatus('✅', 'Location acquired');
       console.log('User location:', userLocation);
+      console.log('Distance to hospital:', distanceToHospital.toFixed(2), 'km');
       toast('Location access granted', 's');
       renderHospitals();
       if (document.getElementById('page-map').classList.contains('active')) {
@@ -41,6 +70,7 @@ function getUserLocation() {
     },
     (error) => {
       locationStatus = 'denied';
+      distanceToHospital = null;
       updateLocationStatus('⚠️', 'Access denied');
       console.warn('Location access denied:', error.message);
       toast('Location access denied. ETA will use default location.', 'w');
@@ -56,8 +86,12 @@ function getUserLocation() {
 function updateLocationStatus(icon, text) {
   const iconEl = document.getElementById('locationIcon');
   const textEl = document.getElementById('locationText');
+  let displayText = text;
+  if (distanceToHospital !== null) {
+    displayText += ` (${distanceToHospital.toFixed(1)} km to hospital)`;
+  }
   if (iconEl) iconEl.textContent = icon;
-  if (textEl) textEl.textContent = text;
+  if (textEl) textEl.textContent = displayText;
 }
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
@@ -706,6 +740,12 @@ function handleFileUpload(input) {
 
     document.getElementById('rFile').dataset.uploaded = 'true';
     toast('File uploaded successfully', 's');
+
+    // Add this inside handleFileUpload, after the toast line:
+    if (file.type !== 'application/pdf') {
+      const base64Data = e.target.result.split(',')[1];
+      verifyMedicalDocument(base64Data, file.type, file.name);
+    }
   };
 
   reader.readAsDataURL(file);
@@ -948,6 +988,10 @@ function updateHospitalETAs() {
 }
 
 // Helper function to calculate distance between two lat/lng points
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1);
@@ -1170,46 +1214,15 @@ async function loadCompatAI(bg) {
   </div>`;
 
   try {
-    const apiKey = sessionStorage.getItem('wlr_claude_key');
-    if (!apiKey) {
-      body.innerHTML = `<span class="text-muted">Enter your API key in the AI Assistant page first, then come back here.</span>`;
-      badge.textContent = '⚠️';
-      return;
-    }
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'x-api-key':         apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model:      'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{ role:'user', content:
-          `You are WREN, a medical AI on a blood logistics platform for Hyderabad hospitals.
-
+    const reply = await callGemini(
+      `You are WREN, a medical AI for Hyderabad hospitals.
 The user selected blood type ${bg}. In 3-4 short sentences explain:
 1. WHY ${bg} has these compatibility rules (ABO antigens, Rh factor biology)
 2. One practical emergency tip specific to ${bg}
-3. How common ${bg} is in the Indian population (give a percentage)
-
-Use **bold** for key terms. Be concise and medically accurate. Under 90 words.`
-        }]
-      })
-    });
-
-    const data  = await res.json();
-    const reply = data.content?.[0]?.text || 'No response.';
-
-    // Use your existing formatAIReply if available, else basic formatting
-    const formatted = typeof formatAIReply === 'function'
-      ? formatAIReply(reply)
-      : reply.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
-
-    body.innerHTML  = `<div style="font-size:.84rem;line-height:1.65">${formatted}</div>`;
+3. How common ${bg} is in the Indian population (give a %)
+Use **bold** for key terms. Under 90 words.`
+    );
+    body.innerHTML  = `<div style="font-size:.84rem;line-height:1.65">${formatGeminiReply(reply)}</div>`;
     badge.textContent = '✅ WREN';
   } catch(err) {
     body.innerHTML  = `<span class="text-muted">AI explanation unavailable: ${err.message}</span>`;
@@ -1469,15 +1482,40 @@ function sendChat() {
   if (!msg) return;
   addBubble('user', msg);
   inp.value = '';
-
-  // Character reacts to user input
+  inp.disabled = true;
   updateCharacterState('thinking');
 
-  setTimeout(() => {
-    const reply = getReply(msg);
-    addBubble('bot', reply);
-    updateCharacterState('talking');
-  }, 800 + Math.random() * 400); // Random delay for more natural feel
+  // Typing indicator
+  const typingId = 'typing-' + Date.now();
+  const typingEl = document.createElement('div');
+  typingEl.id = typingId;
+  typingEl.className = 'cbub cbot';
+  typingEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="typing-dots"><span></span><span></span><span></span></div><span style="font-size:.72rem;color:var(--muted)">WREN is thinking…</span></div>`;
+  document.getElementById('chatMessages').appendChild(typingEl);
+  document.getElementById('chatMessages').scrollTop = 99999;
+
+  const systemPrompt = `You are WREN, the WLR Blood Network Emergency AI for Hyderabad, India.
+${HOSPITALS.length} hospitals, ${BLOOD_BANKS.length} blood banks, ${BASE_DONORS.length + communityDonors.length} donors in network.
+Hospitals: ${HOSPITALS.map(h=>`${h.name}(${h.area},${h.stock} stock)`).join(', ')}.
+Banks: ${BLOOD_BANKS.map(b=>`${b.name}(${b.stock})`).join(', ')}.
+O- = Universal Donor. AB+ = Universal Recipient. ETA=(distance/30)*60 min.
+Be concise, medically accurate, use **bold** for key terms. Under 120 words.
+
+User: ${msg}
+WREN:`;
+
+  callGemini(systemPrompt)
+    .then(reply => {
+      document.getElementById(typingId)?.remove();
+      addBubble('bot', formatGeminiReply(reply));
+      updateCharacterState('talking');
+    })
+    .catch(() => {
+      document.getElementById(typingId)?.remove();
+      addBubble('bot', getReply(msg)); // fallback to keyword replies
+      updateCharacterState('talking');
+    })
+    .finally(() => { inp.disabled = false; inp.focus(); });
 }
 
 function updateCharacterState(state) {
@@ -1581,3 +1619,207 @@ function toast(message, type = 'i') {
     setTimeout(() => t.remove(), 320);
   }, 4000);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AI MEDICAL DOCUMENT VERIFICATION
+// Reads the uploaded document using Claude Vision and checks it against
+// official Indian blood donation eligibility criteria (NBTC guidelines)
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function verifyMedicalDocument(base64Data, mimeType, fileName) {
+  const resultDiv = document.getElementById('docVerifyResult');
+  const innerDiv  = document.getElementById('docVerifyInner');
+  if (!resultDiv || !innerDiv) return;
+
+  resultDiv.style.display = 'block';
+  innerDiv.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--blue-soft);border:1px solid #BFDBFE;border-radius:12px">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+      <div>
+        <div style="font-weight:700;font-size:.85rem;color:#1D4ED8">🔍 WREN is verifying your document…</div>
+        <div style="font-size:.75rem;color:#3B82F6;margin-top:2px">Checking against Indian NBTC blood donation eligibility criteria</div>
+      </div>
+    </div>`;
+
+  const eligibilityPrompt = `You are WREN, a medical AI on the WLR Blood Donation Network for Hyderabad, India.
+A donor uploaded a medical document. Analyse the image and cross-check against NBTC criteria.
+
+MANDATORY: Age 18-65, Weight ≥50kg, Hb ≥12.5g/dL(F)/≥13.0(M), BP 100-180/50-100mmHg, Pulse 60-100bpm, good health, ≥90 days since last donation(M)/≥120days(F).
+PERMANENT DISQUALIFIERS: HIV, Hepatitis B/C, blood cancer, severe heart disease, epilepsy, CKD, thalassemia major, sickle cell, insulin-dependent diabetes, IV drugs, haemophilia.
+TEMPORARY DEFERRAL: fever/infection(7 days), malaria(3mo), typhoid(12mo), TB(2yr), jaundice(12mo), major surgery(12mo), tattoo/piercing(6mo), most vaccines(2wk), pregnancy/childbirth(12mo), dental extraction(3 days), antibiotics(until done), COVID(28 days).
+CONDITIONAL ELIGIBLE: Oral-medication diabetes(not insulin, stable≥28days)=ELIGIBLE. Controlled BP=ELIGIBLE.
+
+Read the document. Extract all health data. Cross-check.
+Return ONLY a JSON object, no markdown, no extra text:
+{
+  "verdict": "ELIGIBLE" or "INELIGIBLE" or "DEFERRED" or "INCONCLUSIVE",
+  "confidence": "HIGH" or "MEDIUM" or "LOW",
+  "documentType": "what this document is",
+  "extractedFindings": ["each health data point found"],
+  "passedChecks": ["criteria passed"],
+  "failedChecks": ["criteria failed or deferred"],
+  "deferralPeriod": "e.g. 3 months, or null",
+  "summary": "2-3 sentence assessment",
+  "recommendation": "specific advice for this donor"
+}`;
+
+  try {
+    const rawText = await callGemini(eligibilityPrompt, base64Data, mimeType);
+
+
+ let result;
+    try {
+      result = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+    } catch {
+      throw new Error('AI returned unreadable response. Please try again.');
+    }
+
+    innerDiv.innerHTML = renderVerifyCard(
+      result.verdict === 'ELIGIBLE'     ? 'pass'  :
+      result.verdict === 'DEFERRED'     ? 'defer' :
+      result.verdict === 'INCONCLUSIVE' ? 'warn'  : 'fail',
+      result, fileName
+    );
+
+    const regBtn = document.querySelector('#page-register .btn-red.wf');
+    if (result.verdict === 'INELIGIBLE') {
+      if (regBtn) { regBtn.disabled=true; regBtn.style.opacity='.5'; regBtn.style.cursor='not-allowed'; regBtn.textContent='❌ Document Failed — Cannot Register'; }
+      toast('❌ Document check failed — donor does not meet eligibility criteria', 'e');
+    } else if (result.verdict === 'ELIGIBLE') {
+      if (regBtn) { regBtn.disabled=false; regBtn.style.opacity='1'; regBtn.style.cursor='pointer'; regBtn.textContent='✅ Verified — Register into Network'; }
+      toast('✅ Document verified — donor appears eligible!', 's');
+    } else if (result.verdict === 'DEFERRED') {
+      if (regBtn) { regBtn.disabled=true; regBtn.style.opacity='.5'; regBtn.style.cursor='not-allowed'; regBtn.textContent=`⏳ Deferred (${result.deferralPeriod || 'period TBD'})`; }
+      toast('⏳ Donor temporarily deferred — see results', 'w');
+    } else {
+      toast('⚠️ Document inconclusive — manual review recommended', 'w');
+    }
+
+  } catch(err) {
+    innerDiv.innerHTML = `<div style="padding:16px;background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:12px">
+      <div style="font-weight:700;color:#991B1B;margin-bottom:6px">❌ Verification Error</div>
+      <div style="font-size:.83rem">${err.message}</div></div>`;
+    toast('Document verification failed: ' + err.message, 'e');
+  }
+}
+
+// ── Render the verification result card ──────────────────────────────────────
+function renderVerifyCard(type, result, fileName) {
+
+  // Handle simple string error/warn cases
+  if (typeof result === 'string') {
+    const colors = {
+      warn:  { bg:'#FFFBEB', border:'#FCD34D', icon:'⚠️', title:'Warning',          titleColor:'#92400E' },
+      error: { bg:'#FEF2F2', border:'#FCA5A5', icon:'❌', title:'Verification Error', titleColor:'#991B1B' }
+    };
+    const c = colors[type] || colors.error;
+    return `
+      <div style="padding:16px;background:${c.bg};border:1.5px solid ${c.border};border-radius:12px">
+        <div style="font-weight:700;font-size:.9rem;color:${c.titleColor};margin-bottom:6px">${c.icon} ${c.title}</div>
+        <div style="font-size:.83rem;color:var(--slate-l)">${result}</div>
+      </div>`;
+  }
+
+  // Full structured result
+  const themes = {
+    pass:  { bg:'#ECFDF5', border:'#6EE7B7', headerBg:'#D1FAE5', icon:'✅', badge:'ELIGIBLE',     badgeBg:'#10B981', title:'Eligible to Donate' },
+    defer: { bg:'#FFFBEB', border:'#FCD34D', headerBg:'#FEF3C7', icon:'⏳', badge:'DEFERRED',     badgeBg:'#F59E0B', title:'Temporarily Deferred' },
+    warn:  { bg:'#EFF6FF', border:'#93C5FD', headerBg:'#DBEAFE', icon:'⚠️', badge:'INCONCLUSIVE', badgeBg:'#3B82F6', title:'Manual Review Needed' },
+    fail:  { bg:'#FEF2F2', border:'#FCA5A5', headerBg:'#FEE2E2', icon:'❌', badge:'INELIGIBLE',   badgeBg:'#EF4444', title:'Not Eligible to Donate' }
+  };
+  const th = themes[type] || themes.warn;
+
+  const passedHtml = (result.passedChecks || []).map(c =>
+    `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:.79rem">
+      <span style="color:#10B981;font-weight:700;flex-shrink:0">✓</span>
+      <span style="color:var(--slate-l)">${c}</span>
+    </div>`
+  ).join('');
+
+  const failedHtml = (result.failedChecks || []).map(c =>
+    `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:.79rem">
+      <span style="color:#EF4444;font-weight:700;flex-shrink:0">${type === 'defer' ? '⏳' : '✗'}</span>
+      <span style="color:var(--slate-l)">${c}</span>
+    </div>`
+  ).join('');
+
+  const findingsHtml = (result.extractedFindings || []).map(f =>
+    `<div style="display:flex;gap:7px;align-items:flex-start;margin-bottom:4px;font-size:.78rem">
+      <span style="color:var(--blue);flex-shrink:0">•</span>
+      <span style="color:var(--slate-l)">${f}</span>
+    </div>`
+  ).join('');
+
+  return `
+    <div style="border:1.5px solid ${th.border};border-radius:14px;overflow:hidden">
+
+      <!-- Header -->
+      <div style="background:${th.headerBg};padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.4rem">${th.icon}</span>
+          <div>
+            <div style="font-family:'DM Serif Display',serif;font-size:1rem">${th.title}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${result.documentType || 'Medical Document'} · Confidence: ${result.confidence || '—'}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:${th.badgeBg};color:white;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:800;letter-spacing:.06em">${th.badge}</span>
+          <div style="font-size:.65rem;color:var(--muted)">Powered by WREN AI</div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div style="background:${th.bg};padding:16px 18px">
+
+        <!-- Summary -->
+        <div style="background:white;border:1px solid ${th.border};border-radius:10px;padding:13px 15px;margin-bottom:14px">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px">📋 Assessment Summary</div>
+          <div style="font-size:.84rem;line-height:1.6;color:var(--slate)">${result.summary || '—'}</div>
+          ${result.deferralPeriod && result.deferralPeriod !== 'null' ? `
+            <div style="margin-top:10px;padding:8px 12px;background:#FEF3C7;border-radius:8px;font-size:.8rem;font-weight:700;color:#92400E">
+              ⏳ Deferral Period: ${result.deferralPeriod}
+            </div>` : ''}
+        </div>
+
+        <!-- Two columns: passed / failed -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+
+          ${passedHtml ? `
+          <div style="background:white;border:1px solid #A7F3D0;border-radius:10px;padding:12px">
+            <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#065F46;margin-bottom:8px">✅ Passed Checks</div>
+            ${passedHtml}
+          </div>` : ''}
+
+          ${failedHtml ? `
+          <div style="background:white;border:1px solid ${type==='defer'?'#FCD34D':'#FCA5A5'};border-radius:10px;padding:12px">
+            <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${type==='defer'?'#92400E':'#991B1B'};margin-bottom:8px">${type==='defer'?'⏳ Deferred Items':'❌ Failed Checks'}</div>
+            ${failedHtml}
+          </div>` : ''}
+        </div>
+
+        <!-- Extracted Findings -->
+        ${findingsHtml ? `
+        <div style="background:white;border:1px solid #BFDBFE;border-radius:10px;padding:12px;margin-bottom:14px">
+          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#1D4ED8;margin-bottom:8px">🔬 Data Extracted from Document</div>
+          ${findingsHtml}
+        </div>` : ''}
+
+        <!-- Recommendation -->
+        ${result.recommendation ? `
+        <div style="background:white;border:1px solid ${th.border};border-radius:10px;padding:12px">
+          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px">💡 Recommendation</div>
+          <div style="font-size:.82rem;line-height:1.55;color:var(--slate)">${result.recommendation}</div>
+        </div>` : ''}
+
+      </div>
+
+      <!-- Footer disclaimer -->
+      <div style="background:rgba(26,31,46,.04);padding:10px 18px;border-top:1px solid ${th.border}">
+        <div style="font-size:.68rem;color:var(--muted)">
+          ⚕️ <b>Medical Disclaimer:</b> This AI verification is for preliminary screening only and does not replace a clinical assessment by a qualified medical professional at the blood donation centre. Final eligibility is always determined by the blood bank staff.
+        </div>
+      </div>
+    </div>
+  `;
+}
+

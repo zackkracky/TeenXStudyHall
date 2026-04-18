@@ -1,3 +1,4 @@
+const { sendSOS } = require("../controllers/sosController");
 const express = require("express");
 const router = express.Router();
 
@@ -10,3 +11,4 @@ router.post("/match-donors", getDonors);
 router.post("/notify", notifyDonors);
 
 module.exports = router;
+router.post("/sos", sendSOS);
